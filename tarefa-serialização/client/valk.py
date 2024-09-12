@@ -1,8 +1,8 @@
 from enum import Enum
 
 class Flag(Enum):
-    LONG = 0
-    CHAR = 1
+    LONG = 1
+    CHAR = 0
 
 class Valk:
     def encode(data: list[tuple]) -> bytes:
@@ -34,21 +34,23 @@ class Valk:
         while bytes_read != len(data):
             result.append([])
 
-            attr_read = 0
-
-            while attr_read != 6:
+            for inner in range(0, 7):
                 flag: int = data[bytes_read]
 
-                match Flag(bin(flag)[2]):
+                flag_type = (flag & 0b10000000) >> 7
+
+                bytes_read = bytes_read + 1
+
+                match Flag(flag_type):
                     case Flag.LONG:
-                        result[index].append((Flag.LONG, data[bytes_read + 1: bytes_read + 5]))
+                        result[index].append((Flag.LONG, data[bytes_read: bytes_read + 4]))
                         bytes_read = bytes_read + 4
                     case Flag.CHAR:
-                        result[index].append((Flag.CHAR, data[bytes_read + 1: bytes_read + flag + 1]))
+                        result[index].append((Flag.CHAR, data[bytes_read: bytes_read + flag].decode()))
                         bytes_read = bytes_read + flag
 
-                attr_read = attr_read + 1
-                bytes_read = bytes_read + 1
+            return result
+                
                 
 
             
