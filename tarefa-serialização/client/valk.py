@@ -31,7 +31,7 @@ class Valk:
         index = 0
         bytes_read = 0
 
-        while bytes_read != len(data):
+        while bytes_read + 1 != len(data):
             result.append([])
 
             for inner in range(0, 7):
@@ -49,7 +49,10 @@ class Valk:
                         result[index].append((Flag.CHAR, data[bytes_read: bytes_read + flag].decode()))
                         bytes_read = bytes_read + flag
 
-            return result
+            index = index + 1
+            
+
+        return result
                 
                 
 

@@ -34,7 +34,6 @@ class Pessoa:
 
     @staticmethod
     def from_valk(data: list[tuple]) -> "Pessoa":
-        print(data[1:4])
         return Pessoa(data[0][1], Endereco.from_valk(data[1:4]), DadosBancarios.from_valk(data[4:8]))
 
     def to_valk(self) -> bytes:
