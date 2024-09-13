@@ -2,7 +2,7 @@ import socket
 
 import time
 
-from valk import Flag, Valk
+from valk import FlagType, Valk
 
 BUFFER_SIZE = 1024
 

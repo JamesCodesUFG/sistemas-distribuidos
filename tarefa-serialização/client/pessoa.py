@@ -1,4 +1,4 @@
-from valk import Flag
+from valk import FlagType
 
 class Endereco:
     def __init__(self, rua: str, bairro: str, numero: int):
@@ -11,7 +11,7 @@ class Endereco:
         return Endereco(data[0][1], data[1][1], data[2][1])
     
     def to_valk(self) -> bytes:
-        return [(Flag.CHAR, self.rua), (Flag.CHAR, self.bairro), (Flag.LONG, self.numero)]
+        return [(FlagType.CHAR, self.rua), (FlagType.CHAR, self.bairro), (FlagType.LONG, self.numero)]
 
 class DadosBancarios:
     def __init__(self, banco: str, agencia: str, conta: str):
@@ -24,7 +24,7 @@ class DadosBancarios:
         return DadosBancarios(data[0][1], data[1][1], data[2][1])
 
     def to_valk(self) -> bytes:
-        return [(Flag.CHAR, self.banco), (Flag.CHAR, self.agencia), (Flag.CHAR, self.conta)]
+        return [(FlagType.CHAR, self.banco), (FlagType.CHAR, self.agencia), (FlagType.CHAR, self.conta)]
 
 class Pessoa:
     def __init__(self, nome: str, endereco: Endereco, dados_bancarios: DadosBancarios):
@@ -37,4 +37,4 @@ class Pessoa:
         return Pessoa(data[0][1], Endereco.from_valk(data[1:4]), DadosBancarios.from_valk(data[4:8]))
 
     def to_valk(self) -> bytes:
-        return [(Flag.CHAR, self.nome), *self.endereco.to_valk(), *self.dados_bancarios.to_valk()]
+        return [(FlagType.CHAR, self.nome), *self.endereco.to_valk(), *self.dados_bancarios.to_valk()]

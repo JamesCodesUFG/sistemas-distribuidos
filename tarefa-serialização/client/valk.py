@@ -1,59 +1,56 @@
 from enum import Enum
 
-class Flag(Enum):
-    LONG = 1
-    CHAR = 0
+class FlagType(Enum):
+    LONG = 0
+    CHAR = 1
 
 class Valk:
+    @staticmethod
     def encode(data: list[tuple]) -> bytes:
         result = b''
 
         for inner in range(0, len(data)):
-            attr = data[inner]
+            match data[inner][0]:
+                case FlagType.LONG:
+                    byte_data = data[inner][1].to_bytes(4, 'little', signed=True)
+                    byte_flag = __encode_flag__(data[inner][0])
+                case FlagType.CHAR:
+                    byte_data = data[inner][1].encode()
+                    byte_flag = __encode_flag__(data[inner][0], len(data[inner][1])) 
 
-            match attr[0]:
-                case Flag.LONG:
-                    bytes_data = attr[1].to_bytes(4, 'little', signed=True)
-                    bytes_flag = (-1).to_bytes(1, 'little', signed=True)
-
-                    result = result + bytes_flag + bytes_data
-                case Flag.CHAR:
-                    byte_data = attr[1].encode()
-                    byte_flag = len(byte_data).to_bytes(1, 'little', signed=True)
-
-                    result = result + byte_flag + byte_data
+            result = result + byte_flag + byte_data
 
         return result
 
+    @staticmethod
     def decode(data: bytes) -> list[list[(tuple)]]:
         result: list[list[(tuple)]] = []
 
-        index = 0
         bytes_read = 0
 
-        while bytes_read + 1 != len(data):
-            result.append([])
+        while bytes_read != len(data):
+            new_pessoa = []
 
             for inner in range(0, 7):
-                flag: int = data[bytes_read]
-
-                flag_type = (flag & 0b10000000) >> 7
+                flag, data_size = __decode_flag__(data[bytes_read])
 
                 bytes_read = bytes_read + 1
 
-                match Flag(flag_type):
-                    case Flag.LONG:
-                        result[index].append((Flag.LONG, data[bytes_read: bytes_read + 4]))
+                match flag:
+                    case FlagType.LONG:
+                        new_pessoa.append((FlagType.LONG, data[bytes_read: bytes_read + 4]))
                         bytes_read = bytes_read + 4
-                    case Flag.CHAR:
-                        result[index].append((Flag.CHAR, data[bytes_read: bytes_read + flag].decode()))
-                        bytes_read = bytes_read + flag
+                    case FlagType.CHAR:
+                        new_pessoa.append((FlagType.CHAR, data[bytes_read: bytes_read + data_size].decode()))
+                        bytes_read = bytes_read + data_size
 
-            index = index + 1
+            result.append(new_pessoa)
             
-
         return result
-                
-                
+    
+def __encode_flag__(flag: FlagType, size: int = 4) -> bytes:
+    return ((flag.value << 7) + size).to_bytes(1, 'little')
 
+def __decode_flag__(flag: int) -> tuple:
+    return (FlagType(flag >> 7), flag & 0b01111111)
             
