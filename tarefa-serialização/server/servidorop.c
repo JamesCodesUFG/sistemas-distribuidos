@@ -108,7 +108,7 @@ int sendMessage(SOCKET Client, char datasender[4096], int *c, int force) {
     }
 
 
-    int iSendResult = send(Client, datasender, *c - 1, 0);
+    int iSendResult = send(Client, datasender, *c, 0);
     *c = 0;
     if (iSendResult == SOCKET_ERROR) {
         printf("send failed with error: %d\n", WSAGetLastError());
