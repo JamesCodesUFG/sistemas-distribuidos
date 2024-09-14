@@ -8,28 +8,23 @@ PESSOA_B = Pessoa('Vitor di Lorenzzi Nunes da Cunha', Endereco('28A', 'Setor Aer
 PESSOA_C = Pessoa('Lucas Goncalves Maia Geraldine', Endereco('R 16', 'Vila Itatiaia', 7), DadosBancarios('Banco do Brasil', '1357', '00013579'))
 
 def exemplo_post(pessoa: Pessoa):
-    pessoa_as_valk = pessoa.to_valk()
+    valk_data = pessoa.to_valk()
 
-    valk_as_bytes = Valk.encode(pessoa_as_valk)
+    bytes_data = Valk.encode(valk_data)
 
-    client.post(valk_as_bytes)
+    client.post(bytes_data)
 
 def exemplo_get():
     response = client.get()
 
-    pessoas_as_valk = Valk.decode(response)
+    valk_data = Valk.decode(response)
 
-    for inner in range(0, len(pessoas_as_valk)):
-        pprint(vars(Pessoa.from_valk(pessoas_as_valk[inner])))
-        print('\n\n')
+    for inner in range(0, len(valk_data)):
+        pprint(vars(Pessoa.from_valk(valk_data[inner])))
+        print('\n')
 
 #for inner in range(0, 8):
 #    exemplo_post(PESSOA_A)
 #    exemplo_post(PESSOA_B)
 #    exemplo_post(PESSOA_C)
 #    exemplo_get()
-
-e = Valk.encode(PESSOA_A.to_valk())
-d = Valk.decode(e)
-
-print(Pessoa.from_valk(d[0]).endereco.bairro)
