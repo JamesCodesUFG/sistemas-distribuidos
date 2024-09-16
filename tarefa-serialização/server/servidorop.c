@@ -81,22 +81,24 @@ void insertData(char in[DEFAULT_BUFLEN]) {
 }
 
 int addToBuffer(SOCKET Client, char in[DEFAULT_BUFLEN], int len) {
-    int iResult = recv(Client, in, len, 0);
-    printf("Wawa\n");
-    if (iResult == 0) return 0;
-    else if (iResult > 0) {
-        insertData(in);
-        printf("bufflen: %d\n", bufflen);
-        printData(databuffer[bufflen-1]);
-        return 0;
-    } 
-    printf("recv failed with error: %d\n", WSAGetLastError());
-    return 1;
+    int recieved = 0;
+    while (!recieved) {
+        int iResult = recv(Client, in, len, 0);
+        if (iResult == 0) continue;
+        else if (iResult > 0) {
+            insertData(in);
+            printf("bufflen: %d\n", bufflen);
+            printData(databuffer[bufflen-1]);
+            return 0;
+        } 
+        printf("recv failed with error: %d\n", WSAGetLastError());
+        return 1;
+    }
 }
 
 int sendMessage(SOCKET Client, char datasender[4096], int *c, int force) {
-    if (*c <= sendbufferlen & !force) return 0; 
-    
+    if (*c < sendbufferlen & !force) return 0; 
+    /*/
     if (!ISTEST) {
         printf("\n%d, %d\n", bufflen, *c);
         for (int i = 0; i < *c; i++) {
@@ -106,9 +108,10 @@ int sendMessage(SOCKET Client, char datasender[4096], int *c, int force) {
         //*c = 0;
         //return 0;
     }
+    //*/
 
 
-    int iSendResult = send(Client, datasender, *c - 1, 0);
+    int iSendResult = send(Client, datasender, *c, 0);
     *c = 0;
     if (iSendResult == SOCKET_ERROR) {
         printf("send failed with error: %d\n", WSAGetLastError());
@@ -124,7 +127,6 @@ int sendBuffer(SOCKET Client, char in[DEFAULT_BUFLEN]) {
     unsigned char datasender[sendbufferlen];
     int c = 0;
     data d;
-    printf("Wawawa\n");
     
     /*/
     int iSendResult = send(Client, "Hello World!", 12, 0);
@@ -133,7 +135,6 @@ int sendBuffer(SOCKET Client, char in[DEFAULT_BUFLEN]) {
 
     //*/
     for (int i = 0; i < bufflen; i++) {
-        printf("%d\n", i);
         d = databuffer[i];
 
         datasender[c++] = d.nNome;
@@ -191,6 +192,8 @@ int sendBuffer(SOCKET Client, char in[DEFAULT_BUFLEN]) {
 
 int getDataStream(SOCKET Client, char in[DEFAULT_BUFLEN], int len) {
     printf("%c\n", in[0]);
+    printf("OK\n");
+    int iSendResult = send(Client, "OK", 2, 0);
     if (in[0] == 'P') return addToBuffer(Client, in, len);
     else if (in[0] == 'G') return sendBuffer(Client, in);
     else return -1;
