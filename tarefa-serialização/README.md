@@ -21,3 +21,9 @@ Os dados no servidor podem ser armazenados em memória ou em arquivo. Fica a seu
 O trabalho poderá ser feito em Dupla.
 
 ## Execução:
+
+### Python:
+    python main.py
+
+### C:
+    gcc servidor.c servidorop.c -o server -lws2_32 -std=c11
