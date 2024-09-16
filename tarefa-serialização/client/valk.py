@@ -34,15 +34,13 @@ class Valk:
             for inner in range(0, 7):
                 flag, data_size = __decode_flag__(data[bytes_read])
 
-                bytes_read = bytes_read + 1
-
                 match flag:
                     case FlagType.LONG:
-                        new_pessoa.append((FlagType.LONG, data[bytes_read: bytes_read + 4]))
-                        bytes_read = bytes_read + 4
+                        new_pessoa.append((FlagType.LONG, data[bytes_read + 1: bytes_read + data_size + 1]))
                     case FlagType.CHAR:
-                        new_pessoa.append((FlagType.CHAR, data[bytes_read: bytes_read + data_size].decode()))
-                        bytes_read = bytes_read + data_size
+                        new_pessoa.append((FlagType.CHAR, data[bytes_read + 1: bytes_read + data_size + 1].decode()))
+                
+                bytes_read = bytes_read + data_size + 1
 
             result.append(new_pessoa)
             
