@@ -42,6 +42,8 @@ class Valk:
                 
                 bytes_read = bytes_read + data_size + 1
 
+                print(new_pessoa)
+
             result.append(new_pessoa)
             
         return result
@@ -50,5 +52,7 @@ def __encode_flag__(flag: FlagType, size: int = 4) -> bytes:
     return ((flag.value << 7) + size).to_bytes(1, 'little')
 
 def __decode_flag__(flag: int) -> tuple:
-    return (FlagType(flag >> 7), flag & 0b01111111)
+    flag_type = FlagType(flag >> 7)
+    size = flag & 0b01111111 if flag_type == FlagType.CHAR else 4
+    return (flag_type, size)
             
