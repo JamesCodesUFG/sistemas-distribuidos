@@ -19,17 +19,14 @@ def exemplo_get():
 
     pessoas_as_valk = Valk.decode(response)
 
-    for inner in range(0, len(pessoas_as_valk)):
-        pprint(vars(Pessoa.from_valk(pessoas_as_valk[inner])))
+    pessoas = [Pessoa.from_valk(pessoas_as_valk) for inner in range(0, len(pessoas_as_valk))]
+
+    for pessoa in pessoas:
+        pprint(vars(pessoa))
         print('\n\n')
 
-#for inner in range(0, 8):
-#    exemplo_post(PESSOA_A)
-#    exemplo_post(PESSOA_B)
-#    exemplo_post(PESSOA_C)
-#    exemplo_get()
-
-e = Valk.encode(PESSOA_A.to_valk())
-d = Valk.decode(e)
-
-print(Pessoa.from_valk(d[0]).endereco.bairro)
+for inner in range(0, 2):
+    exemplo_post(PESSOA_A)
+    exemplo_post(PESSOA_B)
+    exemplo_post(PESSOA_C)
+    exemplo_get()
