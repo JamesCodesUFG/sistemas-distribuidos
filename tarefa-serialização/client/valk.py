@@ -1,8 +1,8 @@
 from enum import Enum
 
 class FlagType(Enum):
-    LONG = 0
-    CHAR = 1
+    LONG = 1
+    CHAR = 0
 
 class Valk:
     @staticmethod

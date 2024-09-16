@@ -6,7 +6,7 @@ from valk import FlagType, Valk
 
 BUFFER_SIZE = 1024
 
-SERVER_ADDRESS = ('172.16.32.112', 27015)
+SERVER_ADDRESS = ('172.16.59.5', 27015)
 
 def create_socket():
     server_address = (SERVER_ADDRESS)
@@ -22,15 +22,18 @@ def get() -> bytes:
 
     client.send('GET'.encode())
 
-    response = b''
+    response = client.recv(BUFFER_SIZE)
 
-    while True:
-        data = client.recv(BUFFER_SIZE)
+    if response.decode() == 'OK':
+        response = b''
 
-        if data != b'':
-            response = response + data
-        else:
-            break 
+        while True:
+            data = client.recv(BUFFER_SIZE)
+
+            if data != b'':
+                response = response + data
+            else:
+                break 
 
     client.close()
 
@@ -41,12 +44,17 @@ def post(data: bytes):
 
     client.send('POST'.encode())
 
-    time.sleep(0.1)
+    response = client.recv(BUFFER_SIZE)
 
-    for inner in range(0, len(data), BUFFER_SIZE):
-        client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
-
-    time.sleep(0.1)
+    if response.decode() == 'OK':
+        for inner in range(0, len(data), BUFFER_SIZE):
+            client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
 
     client.close()
 
+def send(data: bytes):
+    client = create_socket()
+
+    client.send(data)
+
+    client.close()

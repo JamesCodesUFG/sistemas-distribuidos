@@ -12,21 +12,28 @@ def exemplo_post(pessoa: Pessoa):
 
     valk_as_bytes = Valk.encode(pessoa_as_valk)
 
+    print(f'Send: {valk_as_bytes}\n')
+
     client.post(valk_as_bytes)
 
 def exemplo_get():
     response = client.get()
 
+    print(f'Recieved: {response}\n')
+
     pessoas_as_valk = Valk.decode(response)
 
-    pessoas = [Pessoa.from_valk(pessoas_as_valk) for inner in range(0, len(pessoas_as_valk))]
+    pessoas = [Pessoa.from_valk(pessoas_as_valk[inner]) for inner in range(0, len(pessoas_as_valk))]
 
     for pessoa in pessoas:
         pprint(vars(pessoa))
-        print('\n\n')
+        print('\n')
 
 for inner in range(0, 2):
     exemplo_post(PESSOA_A)
     exemplo_post(PESSOA_B)
     exemplo_post(PESSOA_C)
-    exemplo_get()
+
+exemplo_get()
+
+client.send('EXIT'.encode())
