@@ -6,7 +6,7 @@ from valk import FlagType, Valk
 
 BUFFER_SIZE = 1024
 
-SERVER_ADDRESS = ('172.16.59.5', 27015)
+SERVER_ADDRESS = ('192.168.6.35', 27015)
 
 def create_socket():
     server_address = (SERVER_ADDRESS)
