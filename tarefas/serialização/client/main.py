@@ -12,8 +12,6 @@ def exemplo_post(pessoa: Pessoa):
 
     bytes_data = Valk.encode(valk_data)
 
-    print(f'Send: {bytes_data}\n')
-
     client.post(bytes_data)
 
 def exemplo_get():
