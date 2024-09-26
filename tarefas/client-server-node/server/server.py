@@ -8,8 +8,8 @@ class Server:
     server_socket: socket.socket = None
     broadcast_socket: socket.socket = None
 
-    server_thread: threading = None
-    broadcast_thread: threading = None
+    server_thread: Thread = None
+    broadcast_thread: Thread = None
 
     def __init__(self, server_ip='0.0.0.0', server_port: int=8080):
         self.server_address = (server_ip, server_port)
@@ -21,7 +21,7 @@ class Server:
         self.__start_broadcast_thread()
         
     def __create_server_socket(self) -> socket:
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket = socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         self.server_socket.bind(self.server_address)
@@ -29,7 +29,7 @@ class Server:
         self.server_socket.listen(4)
 
     def __create_broadcast_socket(self) -> None:
-        self.broadcast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        self.broadcast_socket = socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.broadcast_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
         self.broadcast_socket.bind(('0.0.0.0', 8080))
@@ -40,6 +40,7 @@ class Server:
         self.broadcast_thread.start()
 
     def __start_broadcast_thread(self) -> None:
+        self.broadcast_thread = Thread(target=self.__listen_to_ping())
         self.broadcast_thread = threading.Thread(target=self.__broadcast_loop())
 
         self.broadcast_thread.start()
