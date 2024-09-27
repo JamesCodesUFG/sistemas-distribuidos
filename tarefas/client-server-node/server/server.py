@@ -1,6 +1,6 @@
 import socket
 
-import threading
+from threading import Thread
 
 from ..utils.protocol import *
 
@@ -34,14 +34,14 @@ class Server:
 
         self.broadcast_socket.bind(('0.0.0.0', 8080))
 
-    def __start_server_thread(self): 
-        self.broadcast_thread = threading.Thread(target=self.__server_loop())
+    def __start_server_thread(self):
+        self.broadcast_thread = Thread(target=self.__server_loop())
 
         self.broadcast_thread.start()
 
     def __start_broadcast_thread(self) -> None:
         self.broadcast_thread = Thread(target=self.__listen_to_ping())
-        self.broadcast_thread = threading.Thread(target=self.__broadcast_loop())
+        self.broadcast_thread = Thread(target=self.__broadcast_loop())
 
         self.broadcast_thread.start()
 
@@ -49,7 +49,7 @@ class Server:
         while True:
             client, _ = self.server_socket.accept()
             
-            threading.Thread(target=self.__handle_client(), args=(client, )).start()
+            Thread(target=self.__handle_client(), args=(client, )).start()
 
     def __broadcast_loop(self):
         while True:

@@ -1,17 +1,19 @@
 import socket
 
-BUFFER_SIZE = 128
+from ..utils.protocol import *
 
 class Client:
     def __init__(self, server_ip: str, server_port: int):
         self.server_address = (server_ip, server_port)
 
-    def get(self, name: str):
-        client = self.__create_socket(self.server_address)
+    def get(self, path: str):
+        client: socket.socket = self.__create_socket(self.server_address)
 
-        client.send(f'GET {name}'.encode())
+        request = Request(RequestMethod.GET, path, 0)
 
-        response: bytes = client.recv(BUFFER_SIZE).decode()
+        client.send(request.encode())
+
+        response = Response.decode(client.recv(BUFFER_SIZE))
 
         data = b''
 
@@ -28,7 +30,7 @@ class Client:
     def list(self, name: str):
         pass
 
-    def post(self, name: str):
+    def post(self, name: str) -> socket.socket:
         client = self.__create_socket(self.server_address)
 
         client.send(f'GET {name}'.encode())
