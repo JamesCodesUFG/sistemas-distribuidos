@@ -105,19 +105,15 @@ class Server:
     def __handle_client_post(self, client: socket.socket, request: Request):
         path = request.path.split('/')[1:]
 
-        self.node_socket.send(request.encode())
-
-        response = Response.decode(self.node_socket.recv(BUFFER_SIZE))
-
         data = b''
 
-        for inner in range(0, response.lenght // BUFFER_SIZE):
-            data = data + self.node_socket.recv(BUFFER_SIZE)
+        for inner in range(0, request.lenght // BUFFER_SIZE):
+            data = data + client.recv(BUFFER_SIZE)
 
-        client.send(Response(ResponseCode.OK, len(data)).encode())
+        self.node_socket.send(request.encode())
 
-        for inner in range(0, response.lenght // BUFFER_SIZE):
-            client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
+        for inner in range(0, request.lenght // BUFFER_SIZE):
+            self.node_socket.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
 
         client.close()
 
