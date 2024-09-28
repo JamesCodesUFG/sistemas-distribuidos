@@ -14,9 +14,10 @@ class ResponseCode(Enum):
     OK = 100
     NOT_FOUND = 201
     BAD_REQUEST = 202
+    SERVICE_UNAVAILABLE = 301
 
 class Request:
-    def __init__(self, method: RequestMethod, path: str, lenght: int):
+    def __init__(self, method: RequestMethod, path: str, lenght: int = 0):
         self.method = method
         self.path = path
         self.lenght = lenght
@@ -30,7 +31,7 @@ class Request:
         return self.method.value.to_bytes(1) + len(self.path).to_bytes(2) + self.path.encode() + self.lenght.to_bytes(4)
 
 class Response:
-    def __init__(self, status: ResponseCode, lenght: int):
+    def __init__(self, status: ResponseCode, lenght: int = 0):
         self.status = status
         self.lenght = lenght
 
