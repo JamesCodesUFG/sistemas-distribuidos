@@ -53,4 +53,4 @@ class Client:
 
         return client
     
-Client('192.168.0.13').get('/list')
+Client('192.168.0.13').get('/all')

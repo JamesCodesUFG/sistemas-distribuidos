@@ -79,16 +79,47 @@ class Server:
         path = request.path.split('/')[1:]
 
         match (path[0]):
-            case 'list':
-                self.node_socket.send(request.encode())
+            case 'all':
+                # TODO: Retornar uma lista com nome das imagens inseridas.
+
                 client.send(Response(ResponseCode.BAD_REQUEST).encode())
+
                 client.close()
             case _:
-                client.send(Response(ResponseCode.NOT_FOUND).encode())
+                self.node_socket.send(request.encode())
+
+                response = Response.decode(self.node_socket.recv(BUFFER_SIZE))
+
+                data = b''
+
+                for inner in range(0, response.lenght // BUFFER_SIZE):
+                    data = data + self.node_socket.recv(BUFFER_SIZE)
+
+                client.send(response.encode())
+
+                for inner in range(0, response.lenght // BUFFER_SIZE):
+                    client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
+
                 client.close()
 
-    def __handle_client_post(client: socket.socket, request: Request):
-        pass
+    def __handle_client_post(self, client: socket.socket, request: Request):
+        path = request.path.split('/')[1:]
+
+        self.node_socket.send(request.encode())
+
+        response = Response.decode(self.node_socket.recv(BUFFER_SIZE))
+
+        data = b''
+
+        for inner in range(0, response.lenght // BUFFER_SIZE):
+            data = data + self.node_socket.recv(BUFFER_SIZE)
+
+        client.send(Response(ResponseCode.OK, len(data)).encode())
+
+        for inner in range(0, response.lenght // BUFFER_SIZE):
+            client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
+
+        client.close()
 
     def __handle_client_delete(client: socket.socket, request: Request):
         pass
