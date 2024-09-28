@@ -53,7 +53,7 @@ class Server:
 
     def __broadcast_loop(self):
         while True:
-            response, node_address = self.broadcast_socket.recvfrom(1024)
+            response, node_address = self.broadcast_socket.recvfrom(BUFFER_SIZE)
 
             print(node_address)
             
@@ -65,7 +65,7 @@ class Server:
                 self.node_socket.connect(node_address)
 
     def __handle_client(self, client: socket.socket):
-        request = Request.decode(client.recv(1024))
+        request = Request.decode(client.recv(BUFFER_SIZE))
 
         match (request.method):
             case RequestMethod.GET:
