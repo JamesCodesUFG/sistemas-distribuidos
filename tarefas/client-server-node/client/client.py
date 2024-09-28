@@ -24,27 +24,19 @@ class Client:
         else:
             print(f'ERROR: {response.status}')
 
-        return data.decode()
+        self.__write(path[1:], data)
 
-    def post(self, name: str) -> socket.socket:
+    def post(self, path: str) -> socket.socket:
         client: socket.socket = self.__create_socket()
 
-        client.send(f'GET {name}'.encode())
+        data = self.__read(path[1:])
 
-        response = Response.decode(client.recv(BUFFER_SIZE))
+        request = Request(RequestMethod.POST, path, len(data))
 
-        data = b''
+        client.send(request.encode())
 
-        # TODO: Implementar como match.
-        if response.status == ResponseCode.OK:
-            for inner in range(0, response.lenght // BUFFER_SIZE):
-                data = data + client.recv(BUFFER_SIZE)
-        else:
-            print(f'ERROR: {response.status}')
-
-        # TODO: Salvar a imagem localmente.
-
-        return data.decode()
+        for inner in range(0, len(data) // BUFFER_SIZE):
+            client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
 
     def __create_socket(self: tuple) -> socket:
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -52,5 +44,17 @@ class Client:
         client.connect(self.server_address)
 
         return client
+
+    def __read(self, file_name: str) -> bytes:
+        data: bytes = None
+
+        with open('./client/' + file_name, 'rb') as file:
+            data = file.read()
+
+        return data
+
+    def __write(self, file_name: str, data: bytes) -> None:
+        with open('./client/' + file_name, 'wb') as file:
+            file.write(data)
     
-Client('192.168.0.13').get('/all')
+Client('192.168.56.1').get('/a.jpg')

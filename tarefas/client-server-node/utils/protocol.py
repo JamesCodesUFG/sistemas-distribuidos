@@ -10,6 +10,9 @@ class RequestMethod(Enum):
     POST = 2
     DELETE = 3
 
+# 10*: Confirmação de sucesso.
+# 20*: Houve um erro com a requisição.
+# 30*: Houve um erro com o sistama.
 class ResponseCode(Enum):
     OK = 100
     NOT_FOUND = 201

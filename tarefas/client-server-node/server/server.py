@@ -103,8 +103,6 @@ class Server:
                 client.close()
 
     def __handle_client_post(self, client: socket.socket, request: Request):
-        path = request.path.split('/')[1:]
-
         data = b''
 
         for inner in range(0, request.lenght // BUFFER_SIZE):
