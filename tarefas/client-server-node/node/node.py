@@ -20,7 +20,7 @@ class Node:
                 case RequestMethod.POST:
                     self.__handle_post(request)
                 case RequestMethod.DELETE:
-                    self.__handle_delete()
+                    self.__handle_delete(request)
 
     def __handle_get(self, request: Request):
         data = self.__read(request.path[1:])
@@ -38,7 +38,7 @@ class Node:
 
         self.__write(request.path[1:], data)
 
-    def __handle_delete():
+    def __handle_delete(self, request: Request):
         pass
 
     def __create_node_socket(self) -> None:
@@ -61,7 +61,7 @@ class Node:
 
         broadcast_socket.bind(('0.0.0.0', 8010))
 
-        broadcast_socket.settimeout(2)
+        broadcast_socket.settimeout(200)
 
         broadcast_socket.sendto('PING'.encode(), ('<broadcast>', 8080))
 

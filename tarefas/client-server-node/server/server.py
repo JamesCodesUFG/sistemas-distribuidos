@@ -5,6 +5,8 @@ from threading import Thread
 from utils.protocol import *
 
 class Server:
+    storage: list[tuple] = []
+
     node_socket: socket.socket = None
     server_socket: socket.socket = None
     broadcast_socket: socket.socket = None
@@ -47,15 +49,15 @@ class Server:
 
     def __server_loop(self):
         while True:
-            client, _ = self.server_socket.accept()
+            client, address = self.server_socket.accept()
+
+            print(address)
             
             Thread(target=self.__handle_client, args=(client, )).start()
 
     def __broadcast_loop(self):
         while True:
             response, node_address = self.broadcast_socket.recvfrom(BUFFER_SIZE)
-
-            print(node_address)
             
             if response.decode() == 'PING':
                 self.broadcast_socket.sendto('PONG'.encode(), node_address)
@@ -64,8 +66,12 @@ class Server:
 
                 self.node_socket.connect(node_address)
 
+                print('CONNECTED')
+
     def __handle_client(self, client: socket.socket):
         request = Request.decode(client.recv(BUFFER_SIZE))
+
+        print(request.method)
 
         match (request.method):
             case RequestMethod.GET:
@@ -103,10 +109,14 @@ class Server:
                 client.close()
 
     def __handle_client_post(self, client: socket.socket, request: Request):
+        self.storage.append((request.path[1:], self.node_socket))
+
         data = b''
 
         for inner in range(0, request.lenght // BUFFER_SIZE):
             data = data + client.recv(BUFFER_SIZE)
+
+        print(data)
 
         self.node_socket.send(request.encode())
 
@@ -115,8 +125,8 @@ class Server:
 
         client.close()
 
-    def __handle_client_delete(client: socket.socket, request: Request):
-        pass
+    def __handle_client_delete(self, client: socket.socket, request: Request):
+        self.node_socket.send(request.encode())
 
     def __handle_node():
         pass

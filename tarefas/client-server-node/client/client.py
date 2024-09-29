@@ -38,6 +38,9 @@ class Client:
         for inner in range(0, len(data) // BUFFER_SIZE):
             client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
 
+    def delete(self, path: str) -> None:
+        request = Request(RequestMethod.DELETE, path)
+
     def __create_socket(self: tuple) -> socket:
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
