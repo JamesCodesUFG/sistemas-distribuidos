@@ -175,3 +175,7 @@ pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
 tarefa-serialização/server/out.exe
+
+# Ignorar arquivos de imagem
+*.jpg
+*.png
