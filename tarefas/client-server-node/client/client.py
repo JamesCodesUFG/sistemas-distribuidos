@@ -51,19 +51,19 @@ class Client:
                 data = b''
 
                 if response.status == ResponseCode.OK:
-                    for inner in range(0, response.lenght // BUFFER_SIZE):
+                    for inner in range(0, ceil(response.lenght / BUFFER_SIZE)):
                         data = data + client.recv(BUFFER_SIZE)
                 else:
                     print(f'ERROR: {response.status}')
 
-                self.__write(path[1:], data)
+                self.__write(path, data)
 
         client.close()
 
     def post(self, path: str) -> socket.socket:
         client: socket.socket = self.__create_socket()
 
-        data = self.__read(path[1:])
+        data = self.__read(path)
 
         request = Request(RequestMethod.POST, path, len(data))
 
@@ -72,7 +72,7 @@ class Client:
         response = Response.decode(client.recv(BUFFER_SIZE))
 
         if response.status == ResponseCode.READY:
-            for inner in range(0, len(data) // BUFFER_SIZE):
+            for inner in range(0, ceil(len(data) / BUFFER_SIZE)):
                 client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
 
         client.close()
@@ -90,23 +90,18 @@ class Client:
     def __read(self, file_name: str) -> bytes:
         data: bytes = None
 
-        with open('./client/' + file_name, 'rb') as file:
+        with open('./client/images' + file_name, 'rb') as file:
             data = file.read()
 
         return data
 
     def __write(self, file_name: str, data: bytes) -> None:
-        with open('./client/' + file_name, 'wb') as file:
+        with open('./client/images' + file_name, 'wb') as file:
             file.write(data)
 
-l = Logger()
+client = Client('172.16.55.155')
 
-l.log('Sucess')
-l.error('Lá ele')
-l.warning('IHHH')
-
-l.print()
-    
-#Client('192.168.5.225').post('/images/AMAZONIA_1_WFI_20240909_036_018_L4_BAND1.tif')
-#Client('192.168.5.225').post('/images/AMAZONIA_1_WFI_20240909_036_018_L4_BAND4.tif')
-#Client('192.168.5.225').get('/all')
+client.post('/AMAZONIA_1_WFI_20240909_036_018_L4_BAND1.tif')
+#client.get('/AMAZONIA_1_WFI_20240909_036_018_L4_BAND4.tif')
+#client.get('/all')
+#client.delete('/AMAZONIA_1_WFI_20240909_036_018_L4_BAND1.tif')

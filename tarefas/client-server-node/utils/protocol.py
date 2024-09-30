@@ -2,6 +2,7 @@
 #COntainer implementar;
 
 from enum import Enum
+import sys
 
 BUFFER_SIZE = 32768
 
@@ -22,6 +23,8 @@ class ResponseCode(Enum):
 
 class Request:
     def __init__(self, method: RequestMethod, path: str, lenght: int = 0):
+        sys.set_int_max_str_digits(10000000)
+
         self.method = method
         self.path = path
         self.lenght = lenght
@@ -35,7 +38,7 @@ class Request:
         return self.method.value.to_bytes(1) + len(self.path).to_bytes(2) + self.path.encode() + self.lenght.to_bytes(4)
     
     def to_string(self) -> str:
-        return f'method={self.method.name}, path={self.path}, lenght={self.lenght}'
+        return f'{self.method.name} {self.path} {self.lenght}'
 
 class Response:
     def __init__(self, status: ResponseCode, lenght: int = 0):
@@ -50,4 +53,4 @@ class Response:
         return self.status.value.to_bytes(1) + self.lenght.to_bytes(4)
 
     def to_string(self) -> str:
-        return f'status={self.status.name}, lenght={self.lenght}'
+        return f'{self.status.name} {self.lenght}'
