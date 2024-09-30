@@ -3,7 +3,7 @@
 
 from enum import Enum
 
-BUFFER_SIZE = 128
+BUFFER_SIZE = 16384
 
 class RequestMethod(Enum):
     GET = 1
@@ -15,6 +15,7 @@ class RequestMethod(Enum):
 # 30*: Houve um erro com o sistama.
 class ResponseCode(Enum):
     OK = 100
+    READY = 101
     NOT_FOUND = 201
     BAD_REQUEST = 202
     SERVICE_UNAVAILABLE = 301

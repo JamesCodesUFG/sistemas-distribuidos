@@ -15,16 +15,47 @@ class Client:
 
         response = Response.decode(client.recv(BUFFER_SIZE))
 
-        data = b''
+        match path[1:]:
+            case 'all':
+                data = b''
 
-        # TODO: Implementar como match.
-        if response.status == ResponseCode.OK:
-            for inner in range(0, response.lenght // BUFFER_SIZE):
-                data = data + client.recv(BUFFER_SIZE)
-        else:
-            print(f'ERROR: {response.status}')
+                client.send(Response(ResponseCode.READY).encode())
 
-        self.__write(path[1:], data)
+                if response.status == ResponseCode.OK:
+                    for inner in range(0, response.lenght // BUFFER_SIZE):
+                        data = data + client.recv(BUFFER_SIZE)
+
+                    print(data)
+
+                    files = []
+
+                    bytes_read = 0
+
+                    while bytes_read < response.lenght:
+                        string_lenght = int.from_bytes(data[bytes_read:bytes_read + 4])
+
+                        index_start = bytes_read + 4
+                        index_end = bytes_read + string_lenght + 5
+
+                        files.append(data[index_start: index_end].decode())
+
+                        bytes_read = bytes_read + string_lenght + 1
+
+                    print(files)
+                else:
+                    print(f'ERROR: {response.status}')
+
+                print()
+            case _:
+                data = b''
+
+                if response.status == ResponseCode.OK:
+                    for inner in range(0, response.lenght // BUFFER_SIZE):
+                        data = data + client.recv(BUFFER_SIZE)
+                else:
+                    print(f'ERROR: {response.status}')
+
+                self.__write(path[1:], data)
 
     def post(self, path: str) -> socket.socket:
         client: socket.socket = self.__create_socket()
@@ -35,8 +66,11 @@ class Client:
 
         client.send(request.encode())
 
-        for inner in range(0, len(data) // BUFFER_SIZE):
-            client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
+        response = Response.decode(client.recv(BUFFER_SIZE))
+
+        if response.status == ResponseCode.READY:
+            for inner in range(0, len(data) // BUFFER_SIZE):
+                client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
 
     def delete(self, path: str) -> None:
         request = Request(RequestMethod.DELETE, path)
@@ -60,4 +94,5 @@ class Client:
         with open('./client/' + file_name, 'wb') as file:
             file.write(data)
     
-Client('192.168.56.1').get('/a.jpg')
+#Client('192.168.0.13').post('/a.jpg')
+Client('192.168.0.13').get('/all')

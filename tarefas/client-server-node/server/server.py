@@ -2,9 +2,10 @@ import socket
 
 from threading import Thread
 
+from utils.system import *
 from utils.protocol import *
 
-class Server:
+class Server(System):
     storage: list[tuple] = []
 
     node_socket: socket.socket = None
@@ -15,13 +16,25 @@ class Server:
     broadcast_thread: Thread = None
 
     def __init__(self, server_ip='0.0.0.0', server_port: int=8080):
+        super().__init__()
+
         self.server_address = (server_ip, server_port)
 
         self.__create_server_socket()
         self.__create_broadcast_socket()
 
-        self.__start_server_thread()
         self.__start_broadcast_thread()
+
+    def exit(self):
+        #if self.node_socket != None:
+        #    self.node_socket.close()
+
+        #if  self.server_socket != None:
+        #     self.server_socket.close()
+
+        #if self.broadcast_socket != None:
+        #    self.broadcast_socket.close()
+        pass
         
     def __create_server_socket(self) -> socket:
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -37,7 +50,7 @@ class Server:
 
         self.broadcast_socket.bind(('0.0.0.0', 8080))
 
-    def __start_server_thread(self):
+    def run(self):
         self.broadcast_thread = Thread(target=self.__server_loop)
 
         self.broadcast_thread.start()
@@ -50,8 +63,6 @@ class Server:
     def __server_loop(self):
         while True:
             client, address = self.server_socket.accept()
-
-            print(address)
             
             Thread(target=self.__handle_client, args=(client, )).start()
 
@@ -66,12 +77,8 @@ class Server:
 
                 self.node_socket.connect(node_address)
 
-                print('CONNECTED')
-
     def __handle_client(self, client: socket.socket):
         request = Request.decode(client.recv(BUFFER_SIZE))
-
-        print(request.method)
 
         match (request.method):
             case RequestMethod.GET:
@@ -86,9 +93,20 @@ class Server:
 
         match (path[0]):
             case 'all':
-                # TODO: Retornar uma lista com nome das imagens inseridas.
+                data = b''
 
-                client.send(Response(ResponseCode.BAD_REQUEST).encode())
+                for tuple in self.storage:
+                    data = data + len(tuple[0]).to_bytes(4) + tuple[0].encode()
+
+                client.send(Response(ResponseCode.OK, len(data)).encode())
+
+                response = Response.decode(client.recv(BUFFER_SIZE))
+
+                if response.status == ResponseCode.READY:
+                    for inner in range(0, len(data) // BUFFER_SIZE):
+                        client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
+                else:
+                    print('Client not ready...')
 
                 client.close()
             case _:
@@ -113,10 +131,10 @@ class Server:
 
         data = b''
 
+        client.send(Response(ResponseCode.READY).encode())
+
         for inner in range(0, request.lenght // BUFFER_SIZE):
             data = data + client.recv(BUFFER_SIZE)
-
-        print(data)
 
         self.node_socket.send(request.encode())
 
@@ -131,4 +149,4 @@ class Server:
     def __handle_node():
         pass
 
-server = Server()
+SystemManager(Server())

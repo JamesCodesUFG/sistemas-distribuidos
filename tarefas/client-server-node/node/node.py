@@ -14,6 +14,8 @@ class Node:
         for inner in range(0, 1):
             request = Request.decode(self.server_socket.recv(BUFFER_SIZE))
 
+            print(f'Request: {request.method.name} -> {request.path}', request.lenght)
+
             match request.method:
                 case RequestMethod.GET:
                     self.__handle_get(request)
@@ -34,6 +36,7 @@ class Node:
         data = b''
 
         for inner in range(0, request.lenght // BUFFER_SIZE):
+            print('----> Recebendo dados: {inner}.')
             data = data + self.server_socket.recv(BUFFER_SIZE)
 
         self.__write(request.path[1:], data)
