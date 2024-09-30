@@ -11,7 +11,7 @@ class Node:
         self.__main_loop()
 
     def __main_loop(self):
-        for inner in range(0, 1):
+        for inner in range(0, 2):
             request = Request.decode(self.server_socket.recv(BUFFER_SIZE))
 
             print(f'Request: {request.method.name} -> {request.path}', request.lenght)

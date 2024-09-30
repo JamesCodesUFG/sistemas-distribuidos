@@ -1,3 +1,4 @@
+from math import ceil
 import socket
 
 from threading import Thread
@@ -26,14 +27,6 @@ class Server(System):
         self.__start_broadcast_thread()
 
     def exit(self):
-        #if self.node_socket != None:
-        #    self.node_socket.close()
-
-        #if  self.server_socket != None:
-        #     self.server_socket.close()
-
-        #if self.broadcast_socket != None:
-        #    self.broadcast_socket.close()
         pass
         
     def __create_server_socket(self) -> socket:
@@ -51,12 +44,12 @@ class Server(System):
         self.broadcast_socket.bind(('0.0.0.0', 8080))
 
     def run(self):
-        self.broadcast_thread = Thread(target=self.__server_loop)
+        self.broadcast_thread = Thread(target=self.__server_loop, daemon=True)
 
         self.broadcast_thread.start()
 
     def __start_broadcast_thread(self) -> None:
-        self.broadcast_thread = Thread(target=self.__broadcast_loop)
+        self.broadcast_thread = Thread(target=self.__broadcast_loop, daemon=True)
 
         self.broadcast_thread.start()
 
@@ -93,17 +86,20 @@ class Server(System):
 
         match (path[0]):
             case 'all':
+                file_list = [tuple[0] for tuple in self.storage]
+
                 data = b''
 
-                for tuple in self.storage:
-                    data = data + len(tuple[0]).to_bytes(4) + tuple[0].encode()
+                for file_name in file_list:
+                    data = data + len(file_name).to_bytes(1) + file_name.encode()
 
                 client.send(Response(ResponseCode.OK, len(data)).encode())
 
                 response = Response.decode(client.recv(BUFFER_SIZE))
 
                 if response.status == ResponseCode.READY:
-                    for inner in range(0, len(data) // BUFFER_SIZE):
+                    for inner in range(0, ceil(len(data) / BUFFER_SIZE)):
+                        print(f'Vai mandar {inner}', data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
                         client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
                 else:
                     print('Client not ready...')

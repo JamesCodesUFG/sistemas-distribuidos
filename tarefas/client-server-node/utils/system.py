@@ -26,7 +26,7 @@ class System(Thread, ABC):
     def kill(self):
         self.exit()
 
-        sys.exit()
+        sys.exit(1)
 
 class SystemManager:
     __system: 'System' = None
@@ -43,6 +43,6 @@ class SystemManager:
             _input = input('> ')
 
             if _input == 'exit' or 'EXIT':
-                self.__system.kill(1)
+                self.__system.kill()
             elif _input == 'log' or 'LOG':
                 print('Soon...')

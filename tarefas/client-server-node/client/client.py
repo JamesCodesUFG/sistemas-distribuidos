@@ -1,3 +1,4 @@
+from math import ceil
 import socket
 
 from utils.protocol import *
@@ -22,7 +23,7 @@ class Client:
                 client.send(Response(ResponseCode.READY).encode())
 
                 if response.status == ResponseCode.OK:
-                    for inner in range(0, response.lenght // BUFFER_SIZE):
+                    for inner in range(0, ceil(response.lenght / BUFFER_SIZE)):
                         data = data + client.recv(BUFFER_SIZE)
 
                     print(data)
@@ -34,8 +35,8 @@ class Client:
                     while bytes_read < response.lenght:
                         string_lenght = int.from_bytes(data[bytes_read:bytes_read + 4])
 
-                        index_start = bytes_read + 4
-                        index_end = bytes_read + string_lenght + 5
+                        index_start = bytes_read + 1
+                        index_end = bytes_read + string_lenght + 2
 
                         files.append(data[index_start: index_end].decode())
 
@@ -45,7 +46,6 @@ class Client:
                 else:
                     print(f'ERROR: {response.status}')
 
-                print()
             case _:
                 data = b''
 
@@ -56,6 +56,8 @@ class Client:
                     print(f'ERROR: {response.status}')
 
                 self.__write(path[1:], data)
+
+        client.close()
 
     def post(self, path: str) -> socket.socket:
         client: socket.socket = self.__create_socket()
@@ -71,6 +73,8 @@ class Client:
         if response.status == ResponseCode.READY:
             for inner in range(0, len(data) // BUFFER_SIZE):
                 client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
+
+        client.close()
 
     def delete(self, path: str) -> None:
         request = Request(RequestMethod.DELETE, path)
@@ -94,5 +98,6 @@ class Client:
         with open('./client/' + file_name, 'wb') as file:
             file.write(data)
     
-#Client('192.168.0.13').post('/a.jpg')
-Client('192.168.0.13').get('/all')
+Client('192.168.5.225').post('/a.jpg')
+Client('192.168.5.225').get('/b.jpg')
+Client('192.168.5.225').get('/all')
