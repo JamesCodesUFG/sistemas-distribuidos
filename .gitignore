@@ -179,3 +179,4 @@ tarefa-serialização/server/out.exe
 # Ignorar arquivos de imagem
 *.jpg
 *.png
+*.tif

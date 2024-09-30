@@ -3,7 +3,7 @@
 
 from enum import Enum
 
-BUFFER_SIZE = 16384
+BUFFER_SIZE = 32768
 
 class RequestMethod(Enum):
     GET = 1
@@ -33,6 +33,9 @@ class Request:
 
     def encode(self) -> bytes:
         return self.method.value.to_bytes(1) + len(self.path).to_bytes(2) + self.path.encode() + self.lenght.to_bytes(4)
+    
+    def to_string(self) -> str:
+        return f'method={self.method.name}, path={self.path}, lenght={self.lenght}'
 
 class Response:
     def __init__(self, status: ResponseCode, lenght: int = 0):
@@ -46,3 +49,5 @@ class Response:
     def encode(self) -> bytes:
         return self.status.value.to_bytes(1) + self.lenght.to_bytes(4)
 
+    def to_string(self) -> str:
+        return f'status={self.status.name}, lenght={self.lenght}'

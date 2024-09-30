@@ -1,17 +1,21 @@
 import socket
 
+from utils.system import *
 from utils.protocol import *
 
-class Node:
+class Node(System):
     server_socket: socket.socket = None
 
     def __init__(self):
+        super().__init__()
+
         self.__create_node_socket()
 
-        self.__main_loop()
+    def exit():
+        pass
 
-    def __main_loop(self):
-        for inner in range(0, 2):
+    def run(self):
+        while True:
             request = Request.decode(self.server_socket.recv(BUFFER_SIZE))
 
             print(f'Request: {request.method.name} -> {request.path}', request.lenght)
@@ -84,4 +88,4 @@ class Node:
         with open('./node/' + file_name, 'wb') as file:
             file.write(data)
     
-node = Node()
+SystemManager(Node())

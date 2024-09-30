@@ -2,6 +2,7 @@ from math import ceil
 import socket
 
 from utils.protocol import *
+from utils.logger import *
 
 class Client:
     def __init__(self, server_ip: str, server_port: int = 8080):
@@ -97,7 +98,15 @@ class Client:
     def __write(self, file_name: str, data: bytes) -> None:
         with open('./client/' + file_name, 'wb') as file:
             file.write(data)
+
+l = Logger()
+
+l.log('Sucess')
+l.error('Lá ele')
+l.warning('IHHH')
+
+l.print()
     
-Client('192.168.5.225').post('/a.jpg')
-Client('192.168.5.225').get('/b.jpg')
-Client('192.168.5.225').get('/all')
+#Client('192.168.5.225').post('/images/AMAZONIA_1_WFI_20240909_036_018_L4_BAND1.tif')
+#Client('192.168.5.225').post('/images/AMAZONIA_1_WFI_20240909_036_018_L4_BAND4.tif')
+#Client('192.168.5.225').get('/all')
