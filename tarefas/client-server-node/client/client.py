@@ -34,10 +34,10 @@ class Client:
                     bytes_read = 0
 
                     while bytes_read < response.lenght:
-                        string_lenght = int.from_bytes(data[bytes_read:bytes_read + 4])
+                        string_lenght = int.from_bytes(data[bytes_read:bytes_read + 1])
 
                         index_start = bytes_read + 1
-                        index_end = bytes_read + string_lenght + 2
+                        index_end = index_start + string_lenght
 
                         files.append(data[index_start: index_end].decode())
 
@@ -78,7 +78,11 @@ class Client:
         client.close()
 
     def delete(self, path: str) -> None:
+        client: socket.socket = self.__create_socket()
+
         request = Request(RequestMethod.DELETE, path)
+
+        client.send(request.encode())
 
     def __create_socket(self: tuple) -> socket:
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -99,9 +103,9 @@ class Client:
         with open('./client/images' + file_name, 'wb') as file:
             file.write(data)
 
-client = Client('172.16.55.155')
+client = Client('192.168.0.13')
 
-client.post('/AMAZONIA_1_WFI_20240909_036_018_L4_BAND1.tif')
-#client.get('/AMAZONIA_1_WFI_20240909_036_018_L4_BAND4.tif')
-#client.get('/all')
-#client.delete('/AMAZONIA_1_WFI_20240909_036_018_L4_BAND1.tif')
+client.post('/a.jpg')
+client.get('/b.jpg')
+client.get('/all')
+client.delete('/a.jpg')

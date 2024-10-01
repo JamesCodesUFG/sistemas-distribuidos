@@ -1,3 +1,4 @@
+import os
 import socket
 
 from math import ceil
@@ -40,7 +41,7 @@ class Node(System):
         self.server_socket.send(Response(ResponseCode.OK, len(data)).encode())
 
         for inner in range(0, ceil(len(data) / BUFFER_SIZE)):
-            if inner % 500 == 0 or inner == ceil(len(data) / BUFFER_SIZE):
+            if inner % 500 == 0 or inner == ceil(len(data) / BUFFER_SIZE) - 1:
                 self._logger.log(f'Enviado {inner} de {ceil(len(data) / BUFFER_SIZE)}.')
 
             self.server_socket.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
@@ -63,7 +64,7 @@ class Node(System):
         self._logger.log('Post finalizado com sucesso...')
 
     def __handle_delete(self, request: Request):
-        pass
+        os.remove('./node/images' + request.path)
 
     def __create_node_socket(self) -> None:
         new_node_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
