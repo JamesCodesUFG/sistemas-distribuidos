@@ -103,9 +103,9 @@ class Client:
         with open('./client/images' + file_name, 'wb') as file:
             file.write(data)
 
-client = Client('192.168.0.13')
+client = Client('192.168.56.1')
 
-client.post('/a.jpg')
-client.get('/b.jpg')
-client.get('/all')
-client.delete('/a.jpg')
+#client.post('/AMAZONIA_1_WFI_20240909_036_018_L4_BAND1.tif')
+client.get('/AMAZONIA_1_WFI_20240909_036_018_L4_BAND1.tif')
+#client.get('/all')
+#client.delete('/AMAZONIA_1_WFI_20240909_036_018_L4_BAND1.tif')
