@@ -4,7 +4,7 @@
 from enum import Enum
 import sys
 
-BUFFER_SIZE = 32768
+BUFFER_SIZE = 60000
 
 class RequestMethod(Enum):
     GET = 1

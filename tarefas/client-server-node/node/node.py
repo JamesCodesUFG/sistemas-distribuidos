@@ -84,8 +84,6 @@ class Node(System):
         broadcast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         broadcast_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-        broadcast_socket.bind(('0.0.0.0', 8010))
-
         broadcast_socket.settimeout(200)
 
         broadcast_socket.sendto('PING'.encode(), ('<broadcast>', 8080))

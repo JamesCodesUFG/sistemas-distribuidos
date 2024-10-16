@@ -5,8 +5,10 @@ from threading import Thread
 
 from utils.system import *
 from utils.protocol import *
+from node_handler import NodeHandler
 
 class Server(System):
+    __node_handler = NodeHandler
     storage: list[tuple] = []
 
     node_socket: socket.socket = None
