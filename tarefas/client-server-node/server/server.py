@@ -7,10 +7,10 @@ from threading import Thread
 
 from utils.system import *
 from utils.protocol import *
-from server.node_handler import NodeHandler
+from server.node_manager import NodeManager
 
 class Server(System):
-    __node_handler = NodeHandler(2)
+    __node_handler = NodeManager(1)
     __storage: dict[str, list[Socket]] = {}
 
     server_socket: Socket = None
@@ -66,12 +66,9 @@ class Server(System):
         self.broadcast_thread.start()
 
     def __broadcast_loop(self):
-        
             while True:
                 try:
                     response, node_address = self.broadcast_socket.recvfrom(BUFFER_SIZE)
-
-                    self._logger.log(f'{node_address} {response.decode()}')
                 
                     if response.decode() == 'PING':
                         self.broadcast_socket.sendto('PONG'.encode(), node_address)
@@ -93,57 +90,56 @@ class Server(System):
 
         match (request.method):
             case RequestMethod.GET:
-                self.__handle_client_get(client, request)
+                self.__get(client, request)
+            case RequestMethod.LIST:
+                self.__list(client)
             case RequestMethod.POST:
-                self.__handle_client_post(client, request)
+                self.__post(client, request)
             case RequestMethod.DELETE:
-                self.__handle_client_delete(client, request)
+                self.__delete(client, request)
 
-    def __handle_client_get(self, client: Socket, request: Request):
-        path = request.path.split('/')[1:]
+    def __get(self, client: Socket, request: Request):
+        _node = self.__storage[request.path[1:]][0]
 
-        match (path[0]):
-            case 'all':
-                file_list = [tuple[0] for tuple in self.storage]
+        _node.send(request.encode())
 
-                data = b''
+        response = Response.decode(_node.recv(BUFFER_SIZE))
 
-                for file_name in file_list:
-                    data = data + len(file_name).to_bytes(1) + file_name.encode()
+        self._logger.log(response.to_string())
 
-                client.send(Response(ResponseCode.OK, len(data)).encode())
+        data = b''
 
-                response = Response.decode(client.recv(BUFFER_SIZE))
+        for inner in range(0, ceil(response.lenght / BUFFER_SIZE)):
+            data = data + _node.recv(BUFFER_SIZE)
 
-                if response.status == ResponseCode.READY:
-                    for inner in range(0, ceil(len(data) / BUFFER_SIZE)):
-                        client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
-                else:
-                    self._logger.error(f'Client {client.getpeername()} not ready...')
+        client.send(response.encode())
 
-                client.close()
-            case _:
-                _node = self.__node_handler.get(request.path[1:])
+        for inner in range(0, ceil(response.lenght / BUFFER_SIZE)):
+            client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
 
-                _node.send(request.encode())
+        client.close()
 
-                response = Response.decode(_node.recv(BUFFER_SIZE))
+    def __list(self, client: Socket):
+        _list = [tuple[0] for tuple in self.__storage]
 
-                self._logger.log(response.to_string())
+        data = b''
 
-                data = b''
+        for name in _list:
+            data = data + len(name).to_bytes(1) + name.encode()
 
-                for inner in range(0, ceil(response.lenght / BUFFER_SIZE)):
-                    data = data + _node.recv(BUFFER_SIZE)
+        client.send(Response(ResponseCode.OK, len(data)).encode())
 
-                client.send(response.encode())
+        response = Response.decode(client.recv(BUFFER_SIZE))
 
-                for inner in range(0, ceil(response.lenght / BUFFER_SIZE)):
-                    client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
+        if response.status == ResponseCode.READY:
+            for inner in range(0, ceil(len(data) / BUFFER_SIZE)):
+                client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
+        else:
+            self._logger.error(f'Client {client.getpeername()} not ready...')
 
-                client.close()
+        client.close()
 
-    def __handle_client_post(self, client: Socket, request: Request):
+    def __post(self, client: Socket, request: Request):
         _nodes = self.__node_handler.next()
 
         _nodes_name = [element[0] for element in _nodes]
@@ -168,7 +164,7 @@ class Server(System):
 
         self._logger.log('Envio finalizado com sucesso...')
 
-    def __handle_client_delete(self, client: Socket, request: Request):
+    def __delete(self, client: Socket, request: Request):
         _nodes = self.__storage[request.path[1:]]
 
         for _node in _nodes:

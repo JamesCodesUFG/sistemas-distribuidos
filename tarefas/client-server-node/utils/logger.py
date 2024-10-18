@@ -1,3 +1,6 @@
+import os
+import platform
+
 from enum import Enum
 
 from threading import Lock
@@ -28,8 +31,18 @@ class Logger:
         self.__lock.release()
 
     def print(self):
+        self.__clear_terminal()
+
         for log in self.__logs:
+            print('')
             log.print()
+            print('')
+
+    def __clear_terminal(self):
+        if platform.system() == "Windows":
+            os.system("cls")
+        else:
+            os.system("clear")
 
 class Log:
     def __init__(self, message: str, type: LogType, tags: list[str]=[]):

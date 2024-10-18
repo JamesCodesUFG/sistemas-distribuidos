@@ -67,28 +67,34 @@ class Node(System):
         os.remove('./node/images' + request.path)
 
     def __create_node_socket(self) -> None:
-        new_node_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        new_node_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        new_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        new_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        new_node_socket.bind(('0.0.0.0', 8010))
+        new_socket.bind(('127.0.0.1', 0))
 
-        new_node_socket.listen(1)
+        new_socket.listen(1)
 
-        while self.__ping_server() != 'PONG':
+        self._logger.log(f'[CREATE SOCKET] {new_socket.getsockname()}')
+
+        while self.__ping_server(new_socket.getsockname()) != 'PONG':
             print('Not server.')
         else:
-            server, _ = new_node_socket.accept()
+            server, _ = new_socket.accept()
             self.server_socket = server
 
-    def __ping_server(self) -> str:
-        broadcast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        broadcast_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    def __ping_server(self, address: tuple) -> str:
+        new_broadcast = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        new_broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-        broadcast_socket.settimeout(200)
+        new_broadcast.bind(address)
 
-        broadcast_socket.sendto('PING'.encode(), ('<broadcast>', 8080))
+        self._logger.log(f'[CREATE BROADCAST] {new_broadcast.getsockname()}')
 
-        data, _ = broadcast_socket.recvfrom(1024)
+        new_broadcast.settimeout(0.5)
+
+        new_broadcast.sendto('PING'.encode(), ('<broadcast>', 8080))
+
+        data, _ = new_broadcast.recvfrom(1024)
 
         return data.decode()
     

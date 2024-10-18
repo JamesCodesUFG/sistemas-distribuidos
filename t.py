@@ -1,5 +1,14 @@
-d: dict = {}
+def a(func):
+    def wrapper(*args, **kwargs):
+        print('Executou a função com paramentros', args, kwargs)
+        func(*args, **kwargs)
+    return wrapper
 
-d['a'] = 1
+class A():
+    @a
+    def hello_world(self, name: str):
+        print('Hello', name)
 
-print(d)
+    
+
+A().hello_world('Tiago')

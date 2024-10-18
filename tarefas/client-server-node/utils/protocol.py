@@ -8,8 +8,9 @@ BUFFER_SIZE = 60000
 
 class RequestMethod(Enum):
     GET = 1
-    POST = 2
-    DELETE = 3
+    LIST = 2
+    POST = 3
+    DELETE = 4
 
 # 10*: Confirmação de sucesso.
 # 20*: Houve um erro com a requisição.
