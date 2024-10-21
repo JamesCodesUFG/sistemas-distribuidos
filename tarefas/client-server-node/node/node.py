@@ -1,5 +1,7 @@
 import os
+
 import socket
+from socket import socket as Socket
 
 from math import ceil
 
@@ -7,14 +9,15 @@ from utils.system import *
 from utils.protocol import *
 
 class Node(System):
-    server_socket: socket.socket = None
+    __socket: Socket = None
+    __broadcast: Socket = None
 
     def __init__(self):
         super().__init__()
 
         self.daemon = True
 
-        self.__create_node_socket()
+        self.__create_socket()
 
         sys.set_int_max_str_digits(10000)
 
@@ -29,13 +32,13 @@ class Node(System):
 
             match request.method:
                 case RequestMethod.GET:
-                    self.__handle_get(request)
+                    self.__get(request)
                 case RequestMethod.POST:
-                    self.__handle_post(request)
+                    self.__post(request)
                 case RequestMethod.DELETE:
-                    self.__handle_delete(request)
+                    self.__delete(request)
 
-    def __handle_get(self, request: Request):
+    def __get(self, request: Request):
         data = self.__read(request.path)
 
         self.server_socket.send(Response(ResponseCode.OK, len(data)).encode())
@@ -48,7 +51,7 @@ class Node(System):
 
         self._logger.log(f'Envio finalizado com sucesso...')
 
-    def __handle_post(self, request: Request):
+    def __post(self, request: Request):
         data = b''
 
         for inner in range(0, ceil(request.lenght / BUFFER_SIZE)):
@@ -63,40 +66,52 @@ class Node(System):
 
         self._logger.log('Post finalizado com sucesso...')
 
-    def __handle_delete(self, request: Request):
+    def __delete(self, request: Request):
         os.remove('./node/images' + request.path)
 
-    def __create_node_socket(self) -> None:
-        new_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        new_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    def __create_socket(self) -> None:
+        try:
+            new_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            new_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        new_socket.bind(('127.0.0.1', 0))
+            new_socket.bind(('127.0.0.1', 0))
 
-        new_socket.listen(1)
+            new_socket.listen(4)
 
-        self._logger.log(f'[CREATE SOCKET] {new_socket.getsockname()}')
+            self.__socket = new_socket
 
-        while self.__ping_server(new_socket.getsockname()) != 'PONG':
-            print('Not server.')
+            self._logger.log(f'[SERVER] {new_socket.getsockname()}')
+        except Exception as error:
+            self._logger.error(f'[SERVER] {error}')
+
+    def __create_broadcast(self):
+        try:
+            new_broadcast = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            new_broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+
+            new_broadcast.bind(self.__socket.getpeername())
+
+            new_broadcast.settimeout(0.5)
+
+            self.__broadcast = new_broadcast
+
+            self._logger.log(f'[BROADCAST] {new_broadcast.getsockname()}')
+        except Exception as error:
+            self._logger.error(f'[BROADCAST] {error}')
+
+    def __find_server(self):
+        while self.__ping_server(self.__socket.getsockname()) != 'PONG':
+            self.__braodcast.sendto('PING'.encode(), ('<broadcast>', 8080))
+
+            data, _ = new_broadcast.recvfrom(1024)
+
+            return data.decode()
         else:
-            server, _ = new_socket.accept()
-            self.server_socket = server
+            _, address = self.__socket.accept()
+            self.server_address = address
 
     def __ping_server(self, address: tuple) -> str:
-        new_broadcast = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        new_broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-
-        new_broadcast.bind(address)
-
-        self._logger.log(f'[CREATE BROADCAST] {new_broadcast.getsockname()}')
-
-        new_broadcast.settimeout(0.5)
-
-        new_broadcast.sendto('PING'.encode(), ('<broadcast>', 8080))
-
-        data, _ = new_broadcast.recvfrom(1024)
-
-        return data.decode()
+        
     
     def __read(self, file_name: str) -> bytes:
         data: bytes = None

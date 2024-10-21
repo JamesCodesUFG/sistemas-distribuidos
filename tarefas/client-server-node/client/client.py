@@ -16,34 +16,32 @@ class Client:
     def get(self, path:str):
         client: Socket = self.__create_socket()
 
-        response = self.__request_server(client, Request(RequestMethod.GET, path))
+        response = self.__request(client, Request(RequestMethod.GET, path))
 
         data = b''
 
         if response.status == ResponseCode.OK:
             for inner in range(0, ceil(response.lenght / BUFFER_SIZE)):
                 data = data + client.recv(BUFFER_SIZE)
+
+            self.__file.write(path, data)
         else:
             print(f'ERROR: {response.status}')
-
-        self.__file.write(path, data)
 
         client.close()
 
     def list(self, path:str='/') -> list[str]:
         client: Socket = self.__create_socket()
 
-        response = self.__request_server(client, Request(RequestMethod.GET, path))
-
-        data = b''
+        response = self.__request(client, Request(RequestMethod.LIST, path))
 
         client.send(Response(ResponseCode.READY).encode())
+
+        data = b''
 
         if response.status == ResponseCode.OK:
             for inner in range(0, ceil(response.lenght / BUFFER_SIZE)):
                 data = data + client.recv(BUFFER_SIZE)
-
-            print(data)
 
             files = []
 
@@ -63,14 +61,14 @@ class Client:
         else:
             print(f'ERROR: {response.status}')
 
+        client.close()
+
     def post(self, path: str) -> Socket:
         client: Socket = self.__create_socket()
 
-        response = self.__request_server(client, Request(RequestMethod.GET, path))
-
         data = self.__file.read(path)
 
-        request = Request(RequestMethod.POST, path, len(data))
+        response = self.__request(client, Request(RequestMethod.POST, path, len(data)))
 
         if response.status == ResponseCode.READY:
             for inner in range(0, ceil(len(data) / BUFFER_SIZE)):
@@ -85,6 +83,8 @@ class Client:
 
         client.send(request.encode())
 
+        client.close()
+
     def __create_socket(self: tuple) -> socket:
         client = Socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -92,7 +92,7 @@ class Client:
 
         return client
 
-    def __request_server(self, client: Socket, request: Request) -> Response:
+    def __request(self, client: Socket, request: Request) -> Response:
         client.send(request.encode())
 
         response = Response.decode(client.recv(BUFFER_SIZE))

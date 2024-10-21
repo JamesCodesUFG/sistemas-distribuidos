@@ -27,17 +27,20 @@ class Server(System):
         self.server_address = (server_ip, server_port)
 
         self.__create_server_socket()
-        self.__create_broadcast_socket()
 
+        self.__create_broadcast_socket()
         self.__start_broadcast_thread()
 
     def run(self):
         while True:
-            client, address = self.server_socket.accept()
+            try:
+                client, address = self.server_socket.accept()
 
-            self._logger.log(f'Conexão estabelecida com {address[0]}.')
+                self._logger.log(f'[CLIENTE] IP: {address[0]}')
             
-            Thread(target=self.__handle_client, args=(client, )).start()
+                Thread(target=self.__handle_client, args=(client, )).start()
+            except Exception as error:
+                self._logger.error('Error at run,', error)
 
     def exit(self):
         pass
@@ -86,7 +89,7 @@ class Server(System):
     def __handle_client(self, client: Socket):
         request = Request.decode(client.recv(BUFFER_SIZE))
 
-        self._logger.log(f'{client.getpeername()} {request.to_string()}')
+        self._logger.log(f'[REQUEST] {client.getpeername()}, {request.to_string()}')
 
         match (request.method):
             case RequestMethod.GET:
@@ -147,18 +150,16 @@ class Server(System):
 
         self.__storage[request.path[1:]] = _nodes_name
 
-        data = b''
-
         client.send(Response(ResponseCode.READY).encode())
-
-        for inner in range(0, ceil(request.lenght / BUFFER_SIZE)):
-            data = data + client.recv(BUFFER_SIZE)
 
         for _node in _nodes_socket:
             _node.send(request.encode())
 
-            for inner in range(0, ceil(request.lenght / BUFFER_SIZE)):
-                _node.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
+        for inner in range(0, ceil(request.lenght / BUFFER_SIZE)):
+            _bucket = client.recv(BUFFER_SIZE)
+
+            for _nodes in _nodes_socket:
+                _node.send(_bucket)
 
         client.close()
 
