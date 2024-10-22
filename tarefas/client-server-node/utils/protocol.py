@@ -4,6 +4,7 @@
 from enum import Enum
 import sys
 
+
 BUFFER_SIZE = 60000
 
 class RequestMethod(Enum):
@@ -27,6 +28,8 @@ class Request:
         self.method = method
         self.path = path
         self.lenght = lenght
+
+        sys.set_int_max_str_digits(10000000)
 
     @staticmethod
     def decode(data: bytes) -> 'Request':

@@ -36,11 +36,11 @@ class Server(System):
             try:
                 client, address = self.server_socket.accept()
 
-                self._logger.log(f'[CLIENTE] Cliente: {address[0]}')
+                self._logger.log(f'[CLIENT] Cliente: {address[0]}')
             
                 Thread(target=self.__handle_client, args=(client, )).start()
             except Exception as error:
-                self._logger.error('[CLIENTE]', error)
+                self._logger.error('[CLIENT]', error)
 
     def exit(self):
         pass
@@ -83,11 +83,11 @@ class Server(System):
                     self._logger.error(error)
 
     def __handle_client(self, client: Socket):
-        request = Request.decode(client.recv(BUFFER_SIZE))
-
-        self._logger.log(f'[REQUEST] {client.getpeername()}, {request}')
-
         try:
+            request = Request.decode(client.recv(BUFFER_SIZE))
+
+            self._logger.log(f'[REQUEST] {client.getpeername()}, {request}')
+
             match (request.method):
                 case RequestMethod.GET:
                     self.__get(client, request)
@@ -131,12 +131,12 @@ class Server(System):
         if response.status == ResponseCode.READY:
             for inner in range(0, ceil(len(data) / BUFFER_SIZE)):
                 client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
+
+            self._logger.log('[LIST] Finalizado com sucesso...')
         else:
-            self._logger.error(f'Client {client.getpeername()} not ready...')
+            self._logger.error(f'[LIST] Não estava pronto...')
 
         client.close()
-
-        self._logger.log('[LIST] Finalizado com sucesso...')
 
     def __post(self, client: Socket, request: Request):
         _nodes = self.__node_handler.next()
@@ -168,12 +168,15 @@ class Server(System):
             _node.send(request.encode())
 
     def __request_node(self, node: Socket, request: Request):
-        node.send(request.encode())
+        try:
+            node.send(request.encode())
 
-        response = Response.decode(node.recv(BUFFER_SIZE))
+            response = Response.decode(node.recv(BUFFER_SIZE))
 
-        self._logger.log(f'[NODE RESPONSE] {node.getpeername()}, {response}')
+            self._logger.log(f'[NODE RESPONSE] {node.getpeername()}, {response}')
 
-        return response
+            return response
+        except Exception as error:
+            raise Exception(f'[NODE REQUEST] {error}')
 
 SystemManager(Server())

@@ -33,10 +33,10 @@ class Logger:
     def print(self):
         self.__clear_terminal()
 
-        for log in self.__logs:
-            print('')
+        print('')
+        for log in self.__logs:    
             log.print()
-            print('')
+        print('')
 
     def __clear_terminal(self):
         if platform.system() == "Windows":

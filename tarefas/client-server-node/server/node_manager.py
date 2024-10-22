@@ -1,3 +1,4 @@
+import socket
 from socket import socket as Socket
 
 class NodeManager():
@@ -22,7 +23,11 @@ class NodeManager():
         return [(_node, self.__connect(_node)) for _node in _nodes]
     
     def __connect(self, address: tuple):
-        pass
+        new_socket = Socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        new_socket.connect(address)
+
+        return new_socket
     
     def __round_robin(self) -> int:
         self.__current = (self.__current + 1) % self.__size

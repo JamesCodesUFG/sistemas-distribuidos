@@ -11,7 +11,7 @@ from utils.protocol import *
 from utils.file_manager import *
 
 class Node(System):
-    __file: FileManager = FileManager()
+    __file: FileManager = FileManager('C:\\Users\\tiago\\Documents\\Workflows\\ufg\\sistemas-distribuidos\\tarefas\\client-server-node\\node\\images')
 
     __socket: Socket = None
     __broadcast: Socket = None
@@ -33,17 +33,17 @@ class Node(System):
         while True:
             client, address = self.__socket.accept()
 
-            if self.__server_address == address:
+            if self.__server_address[0] == address[0]:
                 thread = Thread(target=self.__handle_request, args=(client, ), daemon=True)
 
                 thread.start()
             else:
-                self._logger.warning(f'Cliente desconhecido: {address}')
+                self._logger.warning(f'[DESCONHECIDO] {address}')
 
     def __handle_request(self, client: Socket):
-        request = Request.decode(self.__socket.recv(BUFFER_SIZE))
+        request = Request.decode(client.recv(BUFFER_SIZE))
 
-        self._logger.log(f'[REQUEST] {client.getpeername()}, {request}')
+        self._logger.log(f'[REQUEST] {client.getsockname()}, {request}')
 
         try:
             match request.method:
@@ -92,34 +92,29 @@ class Node(System):
         self._logger.log('[SUCESSO] Arquivo deletado...')
 
     def __create_socket(self) -> None:
-        try:
-            new_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            new_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        new_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        new_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-            new_socket.bind(('127.0.0.1', 0))
+        new_socket.bind(('127.0.0.1', 0))
 
-            new_socket.listen(4)
+        new_socket.listen(4)
 
-            self.__socket = new_socket
+        self.__socket = new_socket
 
-            self._logger.log(f'[SERVER] {new_socket.getsockname()}')
-        except Exception as error:
-            self._logger.error(f'[SERVER] {error}')
+        self._logger.log(f'[SERVER] {new_socket.getsockname()}')
 
     def __create_broadcast(self):
-        try:
-            new_broadcast = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            new_broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        new_broadcast = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        new_broadcast.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-            new_broadcast.bind(self.__socket.getpeername())
+        new_broadcast.bind(self.__socket.getsockname())
 
-            new_broadcast.settimeout(0.5)
+        new_broadcast.settimeout(0.5)
 
-            self.__broadcast = new_broadcast
+        self.__broadcast = new_broadcast
 
-            self._logger.log(f'[BROADCAST] {new_broadcast.getsockname()}')
-        except Exception as error:
-            self._logger.error(f'[BROADCAST] {error}')
+        self._logger.log(f'[BROADCAST] {new_broadcast.getsockname()}')
+
 
     def __ping_server(self):
         for inner in range(0, 3):
@@ -131,11 +126,11 @@ class Node(System):
 
             if data.decode() == 'PONG':
                 self.__server_address = address
+                self._logger.log(f'[PING] Servidor encontrado: {address}')
                 return
             else:
                 self._logger.warning(f'[PING] Remetente desconhecido...')
 
-        self._logger.error(f'[PING] Servido não encontrado...')
-        raise Exception('Servido não encontrado...')
+        raise Exception('[PING] Servidor não encontrado...')
     
 SystemManager(Node())

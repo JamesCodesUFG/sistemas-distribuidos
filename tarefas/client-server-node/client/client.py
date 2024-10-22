@@ -8,7 +8,7 @@ from utils.protocol import *
 from utils.file_manager import *
 
 class Client:
-    __file: FileManager = FileManager('C:/Users/tiago/Documents/Workspaces/UFG/sistemas-distribuidos/tarefas/client-server-node/client/images')
+    __file: FileManager = FileManager('C:\\Users\\tiago\\Documents\\Workflows\\UFG\\sistemas-distribuidos\\tarefas\\client-server-node\\client\\images')
 
     def __init__(self, server_ip: str, server_port: int = 8080):
         self.server_address = (server_ip, server_port)
@@ -99,13 +99,12 @@ class Client:
 
         return response
 
-
 client = Client('127.0.0.1')
 
-#client.post('/papagaio.jpg')
-client.get('/papagaio.jpg')
-#client.get('/all')
-#client.delete('/AMAZONIA_1_WFI_20240909_036_018_L4_BAND1.tif')
+client.post('a.jpg')
+#client.get('papagaio.jpg')
+#client.list()
+#client.delete('a.jpg')
 
 #client.post('/AMAZONIA_1_WFI_20240909_036_018_L4_BAND1.tif')
 #client.get('/AMAZONIA_1_WFI_20240909_036_018_L4_BAND1.tif')
