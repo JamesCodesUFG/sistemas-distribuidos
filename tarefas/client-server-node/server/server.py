@@ -11,7 +11,7 @@ from server.node_manager import NodeManager
 
 class Server(System):
     __node_handler = NodeManager(1)
-    __storage: dict[str, list[Socket]] = {}
+    __storage: dict[str, list[tuple]] = {}
 
     server_socket: Socket = None
     broadcast_socket: Socket = None
@@ -36,11 +36,11 @@ class Server(System):
             try:
                 client, address = self.server_socket.accept()
 
-                self._logger.log(f'[CLIENTE] IP: {address[0]}')
+                self._logger.log(f'[CLIENTE] Cliente: {address[0]}')
             
                 Thread(target=self.__handle_client, args=(client, )).start()
             except Exception as error:
-                self._logger.error('Error at run,', error)
+                self._logger.error('[CLIENTE]', error)
 
     def exit(self):
         pass
@@ -53,7 +53,7 @@ class Server(System):
 
         self.server_socket.listen(4)
 
-        self._logger.log(f'Servidor criado com sucesso...')
+        self._logger.log(f'[SERVER] Criado com sucesso...')
 
     def __create_broadcast_socket(self) -> None:
         self.broadcast_socket = Socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -61,7 +61,7 @@ class Server(System):
 
         self.broadcast_socket.bind(('0.0.0.0', 8080))
 
-        self._logger.log('Broadcast criado com sucesso...')
+        self._logger.log('[BROADCAST] Criado com sucesso...')
 
     def __start_broadcast_thread(self) -> None:
         self.broadcast_thread = Thread(target=self.__broadcast_loop, daemon=True)
@@ -71,56 +71,50 @@ class Server(System):
     def __broadcast_loop(self):
             while True:
                 try:
-                    response, node_address = self.broadcast_socket.recvfrom(BUFFER_SIZE)
+                    data, address = self.broadcast_socket.recvfrom(BUFFER_SIZE)
                 
-                    if response.decode() == 'PING':
-                        self.broadcast_socket.sendto('PONG'.encode(), node_address)
+                    if data.decode() == 'PING':
+                        self.broadcast_socket.sendto('PONG'.encode(), address)
 
-                        new_node = Socket(socket.AF_INET, socket.SOCK_STREAM)
+                        self.__node_handler.add(address)
 
-                        new_node.connect(node_address)
-
-                        self.__node_handler.add(new_node)
-
-                        self._logger.log(f'Conexão estabelecida com nó {node_address}...')
+                        self._logger.log(f'[BROADCAST] Nó encontrado: {address}')
                 except Exception as error:
                     self._logger.error(error)
 
     def __handle_client(self, client: Socket):
         request = Request.decode(client.recv(BUFFER_SIZE))
 
-        self._logger.log(f'[REQUEST] {client.getpeername()}, {request.to_string()}')
+        self._logger.log(f'[REQUEST] {client.getpeername()}, {request}')
 
-        match (request.method):
-            case RequestMethod.GET:
-                self.__get(client, request)
-            case RequestMethod.LIST:
-                self.__list(client)
-            case RequestMethod.POST:
-                self.__post(client, request)
-            case RequestMethod.DELETE:
-                self.__delete(client, request)
-
+        try:
+            match (request.method):
+                case RequestMethod.GET:
+                    self.__get(client, request)
+                case RequestMethod.LIST:
+                    self.__list(client)
+                case RequestMethod.POST:
+                    self.__post(client, request)
+                case RequestMethod.DELETE:
+                    self.__delete(client, request)
+        except Exception as error:
+            self._logger.error(f'[CLIENT] {error}')
+            
     def __get(self, client: Socket, request: Request):
-        _node = self.__storage[request.path[1:]][0]
+        _node = self.__node_handler.get(self.__storage[request.path])
 
-        _node.send(request.encode())
-
-        response = Response.decode(_node.recv(BUFFER_SIZE))
-
-        self._logger.log(response.to_string())
-
-        data = b''
-
-        for inner in range(0, ceil(response.lenght / BUFFER_SIZE)):
-            data = data + _node.recv(BUFFER_SIZE)
+        response = self.__request_node(_node, request)
 
         client.send(response.encode())
 
         for inner in range(0, ceil(response.lenght / BUFFER_SIZE)):
-            client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
+            bucket = _node.recv(BUFFER_SIZE)
 
+            client.send(bucket)
+            
         client.close()
+
+        self._logger.log('[GET] Finalizado com sucesso...')
 
     def __list(self, client: Socket):
         _list = [tuple[0] for tuple in self.__storage]
@@ -142,13 +136,15 @@ class Server(System):
 
         client.close()
 
+        self._logger.log('[LIST] Finalizado com sucesso...')
+
     def __post(self, client: Socket, request: Request):
         _nodes = self.__node_handler.next()
 
-        _nodes_name = [element[0] for element in _nodes]
+        _nodes_names = [element[0] for element in _nodes]
         _nodes_socket = [element[1] for element in _nodes]
 
-        self.__storage[request.path[1:]] = _nodes_name
+        self.__storage[request.path] = _nodes_names
 
         client.send(Response(ResponseCode.READY).encode())
 
@@ -163,12 +159,21 @@ class Server(System):
 
         client.close()
 
-        self._logger.log('Envio finalizado com sucesso...')
+        self._logger.log('[POST] Finalizado com sucesso...')
 
     def __delete(self, client: Socket, request: Request):
         _nodes = self.__storage[request.path[1:]]
 
         for _node in _nodes:
             _node.send(request.encode())
+
+    def __request_node(self, node: Socket, request: Request):
+        node.send(request.encode())
+
+        response = Response.decode(node.recv(BUFFER_SIZE))
+
+        self._logger.log(f'[NODE RESPONSE] {node.getpeername()}, {response}')
+
+        return response
 
 SystemManager(Server())

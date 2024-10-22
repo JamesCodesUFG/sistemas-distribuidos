@@ -17,4 +17,7 @@ class FileManager:
             file.write(data)
 
     def delete(self, file_name: str):
-        os.remove(f'{self.path}/{file_name}')
+        try:
+            os.remove(f'{self.path}/{file_name}')
+        except Exception as exception:
+            raise exception

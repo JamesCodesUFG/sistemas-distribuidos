@@ -24,8 +24,6 @@ class ResponseCode(Enum):
 
 class Request:
     def __init__(self, method: RequestMethod, path: str, lenght: int = 0):
-        sys.set_int_max_str_digits(10000000)
-
         self.method = method
         self.path = path
         self.lenght = lenght
@@ -38,7 +36,7 @@ class Request:
     def encode(self) -> bytes:
         return self.method.value.to_bytes(1) + len(self.path).to_bytes(2) + self.path.encode() + self.lenght.to_bytes(4)
     
-    def to_string(self) -> str:
+    def __str__(self) -> str:
         return f'{self.method.name} {self.path} {self.lenght}'
 
 class Response:
@@ -53,5 +51,5 @@ class Response:
     def encode(self) -> bytes:
         return self.status.value.to_bytes(1) + self.lenght.to_bytes(4)
 
-    def to_string(self) -> str:
+    def __str__(self) -> str:
         return f'{self.status.name} {self.lenght}'

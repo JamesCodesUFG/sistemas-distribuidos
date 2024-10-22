@@ -1,14 +1,18 @@
 import os
+from math import ceil
 
 import socket
 from socket import socket as Socket
 
-from math import ceil
+from threading import Thread
 
 from utils.system import *
 from utils.protocol import *
+from utils.file_manager import *
 
 class Node(System):
+    __file: FileManager = FileManager()
+
     __socket: Socket = None
     __broadcast: Socket = None
 
@@ -18,56 +22,74 @@ class Node(System):
         self.daemon = True
 
         self.__create_socket()
+        self.__create_broadcast()
 
-        sys.set_int_max_str_digits(10000)
+        self.__ping_server()
 
     def exit(self):
         pass
 
     def run(self):
         while True:
-            request = Request.decode(self.server_socket.recv(BUFFER_SIZE))
+            client, address = self.__socket.accept()
 
-            self._logger.log(request.to_string())
+            if self.__server_address == address:
+                thread = Thread(target=self.__handle_request, args=(client, ), daemon=True)
 
+                thread.start()
+            else:
+                self._logger.warning(f'Cliente desconhecido: {address}')
+
+    def __handle_request(self, client: Socket):
+        request = Request.decode(self.__socket.recv(BUFFER_SIZE))
+
+        self._logger.log(f'[REQUEST] {client.getpeername()}, {request}')
+
+        try:
             match request.method:
                 case RequestMethod.GET:
-                    self.__get(request)
+                    self.__get(client, request)
                 case RequestMethod.POST:
-                    self.__post(request)
+                    self.__post(client, request)
                 case RequestMethod.DELETE:
-                    self.__delete(request)
+                    self.__delete(client, request)
+                case _:
+                    self._logger.error(f'Caso não mapeado: {request.method}')
+        except Exception as error:
+            self._logger.error(error)
 
-    def __get(self, request: Request):
-        data = self.__read(request.path)
+    def __get(self, client: Socket, request: Request):
+        data = self.__file.read(request.path)
 
-        self.server_socket.send(Response(ResponseCode.OK, len(data)).encode())
+        client.send(Response(ResponseCode.OK, len(data)).encode())
 
         for inner in range(0, ceil(len(data) / BUFFER_SIZE)):
-            if inner % 500 == 0 or inner == ceil(len(data) / BUFFER_SIZE) - 1:
-                self._logger.log(f'Enviado {inner} de {ceil(len(data) / BUFFER_SIZE)}.')
+            client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
 
-            self.server_socket.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
+        client.close()
 
-        self._logger.log(f'Envio finalizado com sucesso...')
+        self._logger.log('[SUCESSO] Arquivo guardado...')
 
-    def __post(self, request: Request):
+    def __post(self, client: Socket, request: Request):
         data = b''
 
         for inner in range(0, ceil(request.lenght / BUFFER_SIZE)):
-            if inner % 500 == 0:
-                self._logger.log(f'Recebido {inner} de {ceil(request.lenght / BUFFER_SIZE)}.')
+            data = data + self.__socket.recv(BUFFER_SIZE)
 
-            data = data + self.server_socket.recv(BUFFER_SIZE)
+        self.__file.write(request.path, data)
 
-        self._logger.log('Todos os dados foram recebidos...')
+        client.close()
 
-        self.__write(request.path, data)
+        self._logger.log('[SUCESSO] Arquivo enviado...')
 
-        self._logger.log('Post finalizado com sucesso...')
+    def __delete(self, client: Socket, request: Request):
+        self.__file.delete(request.path)
 
-    def __delete(self, request: Request):
-        os.remove('./node/images' + request.path)
+        client.send(Response(ResponseCode.OK))
+
+        client.close()
+
+        self._logger.log('[SUCESSO] Arquivo deletado...')
 
     def __create_socket(self) -> None:
         try:
@@ -99,38 +121,21 @@ class Node(System):
         except Exception as error:
             self._logger.error(f'[BROADCAST] {error}')
 
-    def __find_server(self):
-        while self.__ping_server(self.__socket.getsockname()) != 'PONG':
-            self.__braodcast.sendto('PING'.encode(), ('<broadcast>', 8080))
+    def __ping_server(self):
+        for inner in range(0, 3):
+            self._logger.log(f'[PING] Tentativa {inner + 1} de 3.')
 
-            data, _ = new_broadcast.recvfrom(1024)
+            self.__broadcast.sendto('PING'.encode(), ('<broadcast>', 8080))
 
-            return data.decode()
-        else:
-            _, address = self.__socket.accept()
-            self.server_address = address
+            data, address = self.__broadcast.recvfrom(1024)
 
-    def __ping_server(self, address: tuple) -> str:
-        
-    
-    def __read(self, file_name: str) -> bytes:
-        data: bytes = None
+            if data.decode() == 'PONG':
+                self.__server_address = address
+                return
+            else:
+                self._logger.warning(f'[PING] Remetente desconhecido...')
 
-        self._logger.log(f"Lendo arquivo '{file_name}'")
-
-        with open('./node/images' + file_name, 'rb') as file:
-            data = file.read()
-
-        self._logger.log("Leitura finalizada com sucesso...")
-
-        return data
-
-    def __write(self, file_name: str, data: bytes) -> None:
-        self._logger.log(f"Escrevendo arquivo '{file_name}'")
-
-        with open('./node/images' + file_name, 'wb') as file:
-            file.write(data)
-
-        self._logger.log("Escrita finalizada com sucesso...")
+        self._logger.error(f'[PING] Servido não encontrado...')
+        raise Exception('Servido não encontrado...')
     
 SystemManager(Node())
