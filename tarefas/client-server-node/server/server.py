@@ -86,7 +86,7 @@ class Server(System):
         try:
             request = Request.decode(client.recv(BUFFER_SIZE))
 
-            self._logger.log(f'[REQUEST] {client.getpeername()}, {request}')
+            self._logger.log(f'[CLIENT REQUEST] {client.getpeername()}, {request}')
 
             match (request.method):
                 case RequestMethod.GET:
@@ -149,7 +149,7 @@ class Server(System):
         client.send(Response(ResponseCode.READY).encode())
 
         for _node in _nodes_socket:
-            _node.send(request.encode())
+            response = self.__request_node(_node, request)
 
         for inner in range(0, ceil(request.lenght / BUFFER_SIZE)):
             _bucket = client.recv(BUFFER_SIZE)

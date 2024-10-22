@@ -74,7 +74,7 @@ class Node(System):
         data = b''
 
         for inner in range(0, ceil(request.lenght / BUFFER_SIZE)):
-            data = data + self.__socket.recv(BUFFER_SIZE)
+            data = data + client.recv(BUFFER_SIZE)
 
         self.__file.write(request.path, data)
 
