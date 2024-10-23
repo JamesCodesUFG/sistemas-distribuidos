@@ -14,8 +14,11 @@ class NodeManager():
         self.__size += 1
         self.__nodes.append(address)
 
-    def get(self, address: list[tuple]) -> Socket:
-        return self.__connect(address[0])
+    def get(self, addresses: list[tuple]) -> Socket:
+        return self.__connect(addresses[0])
+    
+    def all(self, addresses: list[tuple]) -> list[Socket]:
+        return [self.__connect(address) for address in addresses]
 
     def next(self) -> set[tuple[tuple, Socket]]:
         _nodes = set([self.__nodes[self.__round_robin()] for i in range(0, self.__replication_factor)])

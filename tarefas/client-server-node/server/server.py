@@ -151,10 +151,16 @@ class Server(System):
         for _node in _nodes_socket:
             response = self.__request_node(_node, request)
 
+            if response.status != ResponseCode.READY:
+                raise Exception(f'[POST] Nó não estava pronto...')
+
         for inner in range(0, ceil(request.lenght / BUFFER_SIZE)):
             _bucket = client.recv(BUFFER_SIZE)
 
+            self._logger.log(f'[POST] Recebido: {_bucket}')
+
             for _nodes in _nodes_socket:
+                self._logger.log(f'[POST] Enviado para nó: {_node.getsockname()}')
                 _node.send(_bucket)
 
         client.close()
@@ -162,7 +168,7 @@ class Server(System):
         self._logger.log('[POST] Finalizado com sucesso...')
 
     def __delete(self, client: Socket, request: Request):
-        _nodes = self.__storage[request.path[1:]]
+        _nodes = self.__node_handler.all(self.__storage[request.path])
 
         for _node in _nodes:
             _node.send(request.encode())

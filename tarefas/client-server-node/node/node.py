@@ -11,7 +11,7 @@ from utils.protocol import *
 from utils.file_manager import *
 
 class Node(System):
-    __file: FileManager = FileManager('C:\\Users\\tiago\\Documents\\Workflows\\ufg\\sistemas-distribuidos\\tarefas\\client-server-node\\node\\images')
+    __file: FileManager = FileManager('C:\\Users\\tiago\\Documents\\Workspaces\\ufg\\sistemas-distribuidos\\tarefas\\client-server-node\\node\\images')
 
     __socket: Socket = None
     __broadcast: Socket = None
@@ -73,7 +73,12 @@ class Node(System):
     def __post(self, client: Socket, request: Request):
         data = b''
 
+        response = client.send(Response(ResponseCode.READY).encode())
+
         for inner in range(0, ceil(request.lenght / BUFFER_SIZE)):
+            if inner%10 == 0:
+                self._logger.log(f'[POST] {inner + 1} de {ceil(request.lenght / BUFFER_SIZE)}')
+
             data = data + client.recv(BUFFER_SIZE)
 
         self.__file.write(request.path, data)
