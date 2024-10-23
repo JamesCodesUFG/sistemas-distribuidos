@@ -19,9 +19,11 @@ class RequestMethod(Enum):
 class ResponseCode(Enum):
     OK = 100
     READY = 101
-    NOT_FOUND = 201
-    BAD_REQUEST = 202
-    SERVICE_UNAVAILABLE = 301
+    SUCCESS = 200
+    ERROR = 300
+    NOT_FOUND = 301
+    BAD_REQUEST = 302
+    SERVICE_UNAVAILABLE = 401
 
 class Request:
     def __init__(self, method: RequestMethod, path: str, lenght: int = 0):

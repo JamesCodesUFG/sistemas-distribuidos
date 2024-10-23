@@ -11,7 +11,7 @@ from utils.protocol import *
 from utils.file_manager import *
 
 class Node(System):
-    __file: FileManager = FileManager('C:\\Users\\tiago\\Documents\\Workspaces\\ufg\\sistemas-distribuidos\\tarefas\\client-server-node\\node\\images')
+    __file: FileManager = FileManager(r'C:\Users\tiago\Documents\Workflows\ufg\sistemas-distribuidos\tarefas\client-server-node\node\images')
 
     __socket: Socket = None
     __broadcast: Socket = None
@@ -56,7 +56,15 @@ class Node(System):
                 case _:
                     self._logger.error(f'Caso não mapeado: {request.method}')
         except Exception as error:
-            self._logger.error(error)
+            client.send(Response(ResponseCode.ERROR).encode())
+
+            self._logger.error(f'[ERROR] {error}')
+        else:
+            client.send(Response(ResponseCode.SUCCESS).encode())
+
+            self._logger.log('[SUCCESS] Requisição concluida...')
+        finally:
+            client.close()
 
     def __get(self, client: Socket, request: Request):
         data = self.__file.read(request.path)
@@ -65,10 +73,6 @@ class Node(System):
 
         for inner in range(0, ceil(len(data) / BUFFER_SIZE)):
             client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
-
-        client.close()
-
-        self._logger.log('[SUCESSO] Arquivo guardado...')
 
     def __post(self, client: Socket, request: Request):
         data = b''
@@ -83,18 +87,13 @@ class Node(System):
 
         self.__file.write(request.path, data)
 
-        client.close()
-
-        self._logger.log('[SUCESSO] Arquivo enviado...')
-
     def __delete(self, client: Socket, request: Request):
-        self.__file.delete(request.path)
+        try:
+            self.__file.delete(request.path)
 
-        client.send(Response(ResponseCode.OK))
-
-        client.close()
-
-        self._logger.log('[SUCESSO] Arquivo deletado...')
+            client.send(Response(ResponseCode.OK).encode())
+        except Exception as error:
+            raise Exception('[DELETE]', error)
 
     def __create_socket(self) -> None:
         new_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -114,27 +113,29 @@ class Node(System):
 
         new_broadcast.bind(self.__socket.getsockname())
 
-        new_broadcast.settimeout(0.5)
+        new_broadcast.settimeout(0.1)
 
         self.__broadcast = new_broadcast
 
         self._logger.log(f'[BROADCAST] {new_broadcast.getsockname()}')
 
-
     def __ping_server(self):
         for inner in range(0, 3):
-            self._logger.log(f'[PING] Tentativa {inner + 1} de 3.')
+            try:
+                self._logger.log(f'[PING] Tentativa {inner + 1} de 3.')
 
-            self.__broadcast.sendto('PING'.encode(), ('<broadcast>', 8080))
+                self.__broadcast.sendto('PING'.encode(), ('<broadcast>', 8080))
 
-            data, address = self.__broadcast.recvfrom(1024)
+                data, address = self.__broadcast.recvfrom(1024)
 
-            if data.decode() == 'PONG':
-                self.__server_address = address
-                self._logger.log(f'[PING] Servidor encontrado: {address}')
-                return
-            else:
-                self._logger.warning(f'[PING] Remetente desconhecido...')
+                if data.decode() == 'PONG':
+                    self.__server_address = address
+                    self._logger.log(f'[PING] Servidor encontrado: {address}')
+                    return
+                else:
+                    self._logger.warning(f'[PING] Remetente desconhecido...')
+            except:
+                pass
 
         raise Exception('[PING] Servidor não encontrado...')
     
