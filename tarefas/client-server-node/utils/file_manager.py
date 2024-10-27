@@ -1,8 +1,12 @@
 import os
+import shutil
 
 class FileManager:
     def __init__(self, path: str):
         self.path = path
+
+        if not os.path.isdir(path):
+            os.makedirs(path)
 
     def read(self, file_name: str) -> bytes:
         data: bytes = None
@@ -21,3 +25,6 @@ class FileManager:
             os.remove(f'{self.path}\\{file_name}')
         except Exception as exception:
             raise exception
+    
+    def exit(self):
+        shutil.rmtree(self.path)

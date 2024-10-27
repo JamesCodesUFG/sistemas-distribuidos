@@ -10,7 +10,7 @@ from utils.protocol import *
 from server.node_manager import NodeManager
 
 class Server(System):
-    __node_handler = NodeManager(1)
+    __node_handler = NodeManager(2)
     __storage: dict[str, list[tuple]] = {}
 
     server_socket: Socket = None
@@ -98,7 +98,11 @@ class Server(System):
                 case RequestMethod.DELETE:
                     self.__delete(client, request)
         except Exception as error:
-            self._logger.error(f'[CLIENT] {error}')
+            self._logger.error(f'[{request.method.name}] {client.getsockname()}, {error}')
+        else:
+            self._logger.log(f'[{request.method.name}] {client.getsockname()}, sucesso...')
+        finally:
+            client.close()
             
     def __get(self, client: Socket, request: Request):
         _node = self.__node_handler.get(self.__storage[request.path])
@@ -111,10 +115,6 @@ class Server(System):
             bucket = _node.recv(BUFFER_SIZE)
 
             client.send(bucket)
-            
-        client.close()
-
-        self._logger.log('[GET] Finalizado com sucesso...')
 
     def __list(self, client: Socket):
         _list = [tuple[0] for tuple in self.__storage]
@@ -131,12 +131,8 @@ class Server(System):
         if response.status == ResponseCode.READY:
             for inner in range(0, ceil(len(data) / BUFFER_SIZE)):
                 client.send(data[inner * BUFFER_SIZE : (inner + 1) * BUFFER_SIZE])
-
-            self._logger.log('[LIST] Finalizado com sucesso...')
         else:
-            self._logger.error(f'[LIST] Não estava pronto...')
-
-        client.close()
+            raise Exception(f'Não estava pronto...')
 
     def __post(self, client: Socket, request: Request):
         _nodes = self.__node_handler.next()
@@ -152,26 +148,26 @@ class Server(System):
             response = self.__request_node(_node, request)
 
             if response.status != ResponseCode.READY:
-                raise Exception(f'[POST] Nó não estava pronto...')
+                raise Exception(f'Nó não estava pronto...')
 
         for inner in range(0, ceil(request.lenght / BUFFER_SIZE)):
             _bucket = client.recv(BUFFER_SIZE)
 
-            self._logger.log(f'[POST] Recebido: {_bucket}')
-
             for _nodes in _nodes_socket:
                 self._logger.log(f'[POST] Enviado para nó: {_node.getsockname()}')
+
                 _node.send(_bucket)
 
-        client.close()
-
-        self._logger.log('[POST] Finalizado com sucesso...')
-
     def __delete(self, client: Socket, request: Request):
+        
         _nodes = self.__node_handler.all(self.__storage[request.path])
 
         for _node in _nodes:
             _node.send(request.encode())
+
+            response = Response.decode(_node.recv(BUFFER_SIZE))
+
+            self._logger.log(f'[{_node.getsockname()}] {response.status}')
 
     def __request_node(self, node: Socket, request: Request):
         try:
@@ -183,6 +179,6 @@ class Server(System):
 
             return response
         except Exception as error:
-            raise Exception(f'[NODE REQUEST] {error}')
+            raise Exception(f'Erro na requisição para o nó...')
 
 SystemManager(Server())

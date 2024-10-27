@@ -11,7 +11,7 @@ from utils.protocol import *
 from utils.file_manager import *
 
 class Node(System):
-    __file: FileManager = FileManager(r'C:\Users\tiago\Documents\Workflows\ufg\sistemas-distribuidos\tarefas\client-server-node\node\images')
+    __file: FileManager = None
 
     __socket: Socket = None
     __broadcast: Socket = None
@@ -26,8 +26,10 @@ class Node(System):
 
         self.__ping_server()
 
+        self.__file = FileManager(r'C:\Users\tiago\Documents\Workspaces\ufg\sistemas-distribuidos\tarefas\client-server-node\node\images' + f'\\node_{self.__socket.getsockname()[1]}')
+
     def exit(self):
-        pass
+        self.__file.exit()
 
     def run(self):
         while True:
@@ -57,12 +59,10 @@ class Node(System):
                     self._logger.error(f'Caso não mapeado: {request.method}')
         except Exception as error:
             client.send(Response(ResponseCode.ERROR).encode())
-
             self._logger.error(f'[ERROR] {error}')
         else:
             client.send(Response(ResponseCode.SUCCESS).encode())
-
-            self._logger.log('[SUCCESS] Requisição concluida...')
+            self._logger.log(f'[{request.method.name}] Requisição concluida...')
         finally:
             client.close()
 
@@ -90,8 +90,6 @@ class Node(System):
     def __delete(self, client: Socket, request: Request):
         try:
             self.__file.delete(request.path)
-
-            client.send(Response(ResponseCode.OK).encode())
         except Exception as error:
             raise Exception('[DELETE]', error)
 
@@ -137,6 +135,6 @@ class Node(System):
             except:
                 pass
 
-        raise Exception('[PING] Servidor não encontrado...')
+        raise Exception('Servidor não encontrado...')
     
 SystemManager(Node())
