@@ -1,5 +1,6 @@
 import socket
 from socket import socket as Socket
+import random
 
 class NodeManager():
     __size: int = 0
@@ -15,7 +16,7 @@ class NodeManager():
         self.__nodes.append(address)
 
     def get(self, addresses: list[tuple]) -> Socket:
-        return self.__connect(addresses[0])
+        return self.__connect(random.choice(addresses))
     
     def all(self, addresses: list[tuple]) -> list[Socket]:
         return [self.__connect(address) for address in addresses]
@@ -36,7 +37,3 @@ class NodeManager():
         self.__current = (self.__current + 1) % self.__size
 
         return self.__current
-
-class Node:
-    pass
-        
