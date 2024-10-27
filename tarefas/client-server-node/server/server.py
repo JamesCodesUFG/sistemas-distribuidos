@@ -159,7 +159,6 @@ class Server(System):
                 _node.send(_bucket)
 
     def __delete(self, client: Socket, request: Request):
-        
         _nodes = self.__node_handler.all(self.__storage[request.path])
 
         for _node in _nodes:
@@ -168,6 +167,8 @@ class Server(System):
             response = Response.decode(_node.recv(BUFFER_SIZE))
 
             self._logger.log(f'[{_node.getsockname()}] {response.status}')
+
+        self.__storage.pop(request.path)
 
     def __request_node(self, node: Socket, request: Request):
         try:
