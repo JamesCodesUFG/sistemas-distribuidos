@@ -21,15 +21,20 @@ class NodeService(rpyc.Service):
     def exposed_delete(self, name: str) -> None:
         self.__file_manager.delete(name)
 
-def register_to_server(host: str, port: int) -> None:
-    server = rpyc.connect(SERVER_HOST, 8080).root
+    def exposed_ping(self) -> str:
+        return 'PING'
 
-    server.register(host, port)
+def register_to_server(host: str, port: int) -> None:
+    maestro = rpyc.connect(SERVER_HOST, 8081).root
+
+    maestro.register(host, port)
 
 if __name__ == "__main__":
     from rpyc.utils.server import ThreadedServer
 
     server = ThreadedServer(NodeService)
+
+    print(f'Nó iniciado em {(server.host, server.port)}')
 
     register_to_server(server.host, server.port)
 
