@@ -4,7 +4,7 @@ $localDir = 'C:\_temp\teste'                                            # Diret�
 $pythonScript = "t.py"                                                  # Nome do script Python para executar
 
 # 1. Clonar o repositório do GitHub
-Write-Host "Clonando o repositório do GitHub..." -ForegroundColor Green
+Write-Host "Clonando o repositorio do GitHub..." -ForegroundColor Green
 
 if (!(Test-Path -Path $localDir)) {
     git clone $repoUrl $localDir

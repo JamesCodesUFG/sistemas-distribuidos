@@ -5,6 +5,11 @@ from utils.file_manager import FileManager
 
 SERVER_HOST = 'localhost'
 
+def register_to_server(host: str, port: int) -> None:
+    maestro = rpyc.connect(SERVER_HOST, 8090).root
+
+    maestro.register(host, port)
+
 class NodeService(rpyc.Service):
     ALIASES = [f'{uuid.uuid4()}']
 
@@ -23,11 +28,6 @@ class NodeService(rpyc.Service):
 
     def exposed_ping(self) -> str:
         return 'PING'
-
-def register_to_server(host: str, port: int) -> None:
-    maestro = rpyc.connect(SERVER_HOST, 8081).root
-
-    maestro.register(host, port)
 
 if __name__ == "__main__":
     from rpyc.utils.server import ThreadedServer

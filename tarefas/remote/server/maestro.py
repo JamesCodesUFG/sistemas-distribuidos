@@ -113,7 +113,7 @@ class Maestro(rpyc.Service):
 if __name__ == "__main__":
     from rpyc.utils.server import ThreadedServer
 
-    server = ThreadedServer(Maestro(), port=8081)
+    server = ThreadedServer(Maestro(), port=8090)
 
     print(f'Maestro iniciado em ({server.host, server.port})')
 
