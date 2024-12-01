@@ -1,13 +1,12 @@
 import rpyc
 import uuid
-import pprint
 
 from typing import Any
 
 REPLICATION_FACTOR = 2
 
 class Node:
-    def __init__(self, port: str, host: int, name: str, dirt: int = 0, ):
+    def __init__(self, port: str, host: int, name: str, dirt: int = 0):
         self.name = name
         self.__port = port
         self.__host = host
