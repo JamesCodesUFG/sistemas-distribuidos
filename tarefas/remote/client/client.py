@@ -11,8 +11,6 @@ class Client:
         self.__host = host
         self.__port = port
 
-        self.__geoeye = rpyc.connect(self.__host, self.__port)
-
         self.__input = InputManager({
             'get': Commmand(exec=self.get, has_args=True),
             'post': Commmand(exec=self.post, has_args=True),
@@ -52,9 +50,11 @@ class Client:
         try:
             self.__geoeye.ping()
         except:
-            print(f'\n[WARNING] Restabelecendo conexão com servidor...\n')
-
-            self.__geoeye = rpyc.connect(self.__host, self.__port)
+            self.__geoeye = rpyc.connect(
+                                self.__host,
+                                self.__port, config={
+                                    'sync_request_timeout': 600
+                                })
         finally:
             return self.__geoeye.root
     

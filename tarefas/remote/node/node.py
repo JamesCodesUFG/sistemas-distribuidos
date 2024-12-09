@@ -1,41 +1,66 @@
+import sys
 import rpyc
 import uuid
 
+from rpyc.utils.server import ThreadedServer
+
+from utils.rabbit import rabbit_send
 from utils.file_manager import FileManager
 
-SERVER_HOST = 'localhost'
+try:
+    NODE_NAME = sys.argv[1]
+except:
+    NODE_NAME = uuid.uuid4()
 
-def register_to_server(host: str, port: int) -> None:
-    maestro = rpyc.connect(SERVER_HOST, 8090).root
-
-    maestro.register(host, port)
 
 class NodeService(rpyc.Service):
-    ALIASES = [f'{uuid.uuid4()}']
+    ALIASES = [f'NODE_{NODE_NAME}']
 
-    __file_manager: FileManager = FileManager(f'images_{ALIASES[0]}')
+    __fmanager: FileManager = FileManager(f'images_{NODE_NAME}')
 
     def exposed_get(self, name: str) -> bytes:
-        file = self.__file_manager.read(name)
+        file = self.__fmanager.read(name)
 
         return file
 
     def exposed_post(self, name: str, file: bytes) -> None:
-        self.__file_manager.write(name, file)
+        self.__fmanager.write(name, file)
 
     def exposed_delete(self, name: str) -> None:
-        self.__file_manager.delete(name)
+        self.__fmanager.delete(name)
 
     def exposed_ping(self) -> str:
         return 'PING'
 
 if __name__ == "__main__":
-    from rpyc.utils.server import ThreadedServer
+    import monitor
 
-    server = ThreadedServer(NodeService)
+    __cpu_monitor = monitor.CPUMonitor(0.3, f'NODE_{NODE_NAME}')
+    __ram_monitor = monitor.RAMMonitor(0.3, f'NODE_{NODE_NAME}')
+    __hdd_monitor = monitor.HDDMonitor(0.95, f'NODE_{NODE_NAME}')
 
-    print(f'Nó iniciado em {(server.host, server.port)}')
+    try:
+        __cpu_monitor.start()
+        __ram_monitor.start()
+        __hdd_monitor.start()
 
-    register_to_server(server.host, server.port)
+        server = ThreadedServer(NodeService, auto_register=True, protocol_config={
+        'sync_request_timeout': 600,
+        'allow_all_attrs': True,
+        'allow_pickle': True,
+        'max_message_size': 10*9,
+    })
 
-    server.start()
+        rabbit_send('register', f'NODE_{str(NODE_NAME)}')
+
+        print(f'\nNó iniciado em {(server.host, server.port)}\n')
+
+        server.start()
+    except:
+        __cpu_monitor.stop()
+        __ram_monitor.stop()
+        __hdd_monitor.stop()
+    finally:
+        rabbit_send('unregister', f'NODE_{str(NODE_NAME)}')
+
+        
