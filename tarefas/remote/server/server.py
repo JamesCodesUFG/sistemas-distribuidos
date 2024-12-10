@@ -2,46 +2,48 @@ import rpyc
 import math
 
 class GeoEye(rpyc.Service):
-    def __init__(self, host: str = 'localhost', port: int = 8090):
-        self.__host = host
-        self.__port = port
-
-        self.__storage: dict[str, list[str]] = {}
+    def __init__(self):
+        self.__storage: dict[str, dict[str, list[str]]] = {}
     
     def exposed_get(self, name: str) -> bytes:
-        node = self.__connect().choose(self.__storage[name])
+        result = b''
 
-        return node.get(name)
+        for key in self.__storage[name]:
+            port, host = self.__connect_maestro().choose(self.__storage[name][key])
+
+            service = self.__connect_node(port, host)
+
+            result += service.get(f'{name}_{key}')
+
+        return result
     
 
     def exposed_post(self, name: str, file: bytes) -> None:
-        BUFFER_SIZE = 128000
+        BUFFER_SIZE = 540672
 
-        self.__storage[name] = []
+        self.__storage[name] = {}
 
-        for inner in range(0, math.ceil(file / BUFFER_SIZE)):
-            _tuples = self.__connect().next()
+        for inner in range(0, math.ceil(len(file) / BUFFER_SIZE)):
+            self.__storage[name][inner] = []
+
+            _tuples = self.__connect_maestro().next()
 
             for node_name, addr in _tuples:
-                self.__storage[name].append(node_name)
+                self.__storage[name][inner].append(node_name)
 
-                conn = rpyc.connect(
-                        addr[0], addr[1],
-                        config={
-                            'allow_pickle': True,
-                            'sync_request_timeout': 600
-                        })
-            
-                service = conn.root
+                service = self.__connect_node(addr[0], addr[1])
 
                 service.post(f'{name}_{inner}', file[inner * BUFFER_SIZE: (inner + 1) * BUFFER_SIZE])
 
 
     def exposed_delete(self, name: str) -> None:
-        services = self.__connect().all(self.__storage[name])
+        for key in self.__storage[name]:
+            _addrs = self.__connect_maestro().all(self.__storage[name][key])
 
-        for service in services:
-            service.delete(name)
+            for host, port in _addrs:
+                service = self.__connect_node(host, port)
+
+                service.delete(f'{name}_{key}')
 
         del self.__storage[name]
 
@@ -50,7 +52,16 @@ class GeoEye(rpyc.Service):
         return list(self.__storage.keys())
     
     
-    def __connect(self):
+    def __connect_node(self, host: str, port: str):
+        return rpyc.connect(
+                        host, port,
+                        config={
+                            'allow_pickle': True,
+                            'sync_request_timeout': None
+                        }).root
+    
+    
+    def __connect_maestro(self):
         try:
             self.__maestro.ping()
         except:
@@ -60,7 +71,7 @@ class GeoEye(rpyc.Service):
 
             self.__maestro = rpyc.connect(maestro_addr[0], maestro_addr[1], config={
                     'allow_pickle': True,
-                    'sync_request_timeout': 600
+                    'sync_request_timeout': None
                 })
         finally:
             return self.__maestro.root
@@ -70,7 +81,7 @@ if __name__ == "__main__":
     from rpyc.utils.server import ThreadedServer
 
     server = ThreadedServer(GeoEye(), port=8080, protocol_config={
-        'sync_request_timeout': 600,
+        'sync_request_timeout': None,
         'allow_all_attrs': True,
         'allow_pickle': True,
     })

@@ -5,6 +5,8 @@ import threading
 
 from utils.rabbit import rabbit_send
 
+OFF_SET = 0.3
+
 class CPUMonitor(threading.Thread):
     def __init__(self, limit: float, name: str) -> None:
         super().__init__(daemon=True)
@@ -25,7 +27,7 @@ class CPUMonitor(threading.Thread):
             if not self.__state and cpu_percent >= self.__limit:
                 self.__state = True
                 rabbit_send('monitor', f'{self.__name} CPU HEAT')
-            elif self.__state and cpu_percent < self.__limit - 0.1:
+            elif self.__state and cpu_percent < self.__limit - OFF_SET:
                 self.__state = False
                 rabbit_send('monitor', f'{self.__name} CPU COLD')
         
@@ -53,7 +55,7 @@ class RAMMonitor(threading.Thread):
             if not self.__state and ram_percent >= self.__limit:
                 self.__state = True
                 rabbit_send('monitor', f'{self.__name} RAM HEAT')
-            elif self.__state and ram_percent < self.__limit - 0.1:
+            elif self.__state and ram_percent < self.__limit - OFF_SET:
                 self.__state = False
                 rabbit_send('monitor', f'{self.__name} RAM COLD')
         
@@ -86,7 +88,7 @@ class HDDMonitor(threading.Thread):
             if not self.__state and disk_usage_percent >= self.__limit:
                 self.__state = True
                 rabbit_send('monitor', f'{self.__name} HDD HEAT')
-            elif self.__state and disk_usage_percent < self.__limit - 0.1:
+            elif self.__state and disk_usage_percent < self.__limit - OFF_SET:
                 self.__state = False
                 rabbit_send('monitor', f'{self.__name} HDD COLD')
         

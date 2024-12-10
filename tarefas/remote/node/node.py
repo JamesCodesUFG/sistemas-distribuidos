@@ -35,9 +35,9 @@ class NodeService(rpyc.Service):
 if __name__ == "__main__":
     import monitor
 
-    __cpu_monitor = monitor.CPUMonitor(0.3, f'NODE_{NODE_NAME}')
-    __ram_monitor = monitor.RAMMonitor(0.3, f'NODE_{NODE_NAME}')
-    __hdd_monitor = monitor.HDDMonitor(0.95, f'NODE_{NODE_NAME}')
+    __cpu_monitor = monitor.CPUMonitor(0.8, f'NODE_{NODE_NAME}')
+    __ram_monitor = monitor.RAMMonitor(0.8, f'NODE_{NODE_NAME}')
+    __hdd_monitor = monitor.HDDMonitor(1.0, f'NODE_{NODE_NAME}')
 
     try:
         __cpu_monitor.start()

@@ -13,15 +13,33 @@ maestro_nodes: dict[str, 'Node'] = {}
 def __register_node(name: bytes):
     global maestro_nodes
 
-    maestro_nodes[name.decode()] = Node(name.decode())
+    try:
+        maestro_nodes[name.decode()] = Node(name.decode())
 
-def __unregister_node(body: bytes):
+        print(f'\nNó {name.decode()} registrado...\n')
+    except:
+        print('Tentativa falha de registro de nó...')
+
+def __unregister_node(name: bytes):
     global maestro_nodes
 
-    del maestro_nodes[body.decode()]
+    try:
+        del maestro_nodes[name.decode()]
+
+        print(f'\nNó {name.decode()} cancelou registro...\n')
+    except:
+        print('Tentativa falha de cancelar registro...')
 
 def __monitor_node(body: bytes):
+    global maestro_nodes
+
     name, type, status = body.decode().split(' ')
+
+    if status == 'HEAT':
+        maestro_nodes[name].lock()
+    elif status == 'COLD':
+        maestro_nodes[name].unlock()
+
 
     print(f'Node: {name[:4]}, Tipo: {type}, Status: {status}')
 
@@ -34,9 +52,10 @@ rabbit_unregister.start()
 rabbit_monitor.start()
 
 class Node:
-    def __init__(self, name: str, dirt: int = 0):
+    def __init__(self, name: str, dirt: int = 0, lock: bool = False):
         self.name = name
         self.__dirt = dirt
+        self.__lock = lock
 
     def increase(self) -> None:
         self.__dirt += 1
@@ -45,8 +64,17 @@ class Node:
         if self.__dirt > 0:
             self.__dirt -= 1
 
+    def lock(self) -> None:
+        self.__lock = True
+
+    def unlock(self) -> None:
+        self.__lock = False
+
     def is_chooseable(self) -> bool:
         return self.__dirt == 0
+    
+    def is_unlocked(self) -> bool:
+        return not self.__lock
     
     def addr(self):
         host, port = rpyc.discover(self.name)[0]
@@ -54,7 +82,7 @@ class Node:
         return (host, port)
     
     def copy(self):
-        return Node(self.name, self.__dirt)
+        return Node(self.name, self.__dirt, self.__lock)
 
 class MaestroService(rpyc.Service):
     ALIASES = ['MAESTRO']
@@ -96,16 +124,7 @@ class MaestroService(rpyc.Service):
     def exposed_all(self, names: list[str]):
         global maestro_nodes
 
-        result = []
-
-        for name in names:
-            node = maestro_nodes[name]
-
-            node.increase()
-
-            result.append(node.addr())
-
-        return result
+        return [maestro_nodes[name].addr() for name in names]
     
     
     def __round_robin(self) -> Node:
@@ -133,7 +152,7 @@ class MaestroService(rpyc.Service):
         while True:
             _node: Node = nodes[_current]
 
-            if (_node.is_chooseable()):
+            if (_node.is_chooseable() and _node.is_unlocked()):
                 maestro_nodes[_node.name].increase()
 
                 return _node

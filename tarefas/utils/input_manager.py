@@ -19,10 +19,13 @@ class InputManager():
         self.__commands = commands
 
     def next(self):
-        input_cmd, *input_arg = input('> ').split(' ')
+        try:
+            input_cmd, *input_arg = input('> ').split(' ')
 
-        if input_cmd in self.__commands:
-            self.__commands[input_cmd].execute(input_arg)
-        else:
-            print('\nComando não reconhecido...\n')
+            if input_cmd in self.__commands:
+                self.__commands[input_cmd].execute(input_arg)
+            else:
+                print('\nComando não reconhecido...\n')
+        except:
+            pass
 

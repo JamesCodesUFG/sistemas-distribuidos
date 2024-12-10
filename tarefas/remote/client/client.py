@@ -3,6 +3,8 @@ import rpyc
 from utils.file_manager import FileManager
 from utils.input_manager import InputManager, Commmand
 
+import time
+
 class Client:
     __file_manager: FileManager = FileManager('images')
 
@@ -31,9 +33,20 @@ class Client:
         self.__file_manager.write(name, file)
 
     def post(self, name: str) -> None:
+        i = time.time()
+        
         file = self.__file_manager.read(name)
 
         self.__connect().post(name, file)
+
+        e = time.time()
+
+        print('duração', e - i)
+
+    def a(self, name: str, f: bytes):
+        file = self.__connect().get(name)
+
+        self.__file_manager.write(name, file)
 
     def list(self) -> None:
         names = self.__connect().list()
