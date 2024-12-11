@@ -45,11 +45,11 @@ if __name__ == "__main__":
         __hdd_monitor.start()
 
         server = ThreadedServer(NodeService, auto_register=True, protocol_config={
-        'sync_request_timeout': 600,
-        'allow_all_attrs': True,
-        'allow_pickle': True,
-        'max_message_size': 10*9,
-    })
+            'sync_request_timeout': 600,
+            'allow_all_attrs': True,
+            'allow_pickle': True,
+            'max_message_size': 10*9,
+        })
 
         rabbit_send('register', f'NODE_{str(NODE_NAME)}')
 

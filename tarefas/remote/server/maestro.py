@@ -35,13 +35,16 @@ def __monitor_node(body: bytes):
 
     name, type, status = body.decode().split(' ')
 
-    if status == 'HEAT':
-        maestro_nodes[name].lock()
-    elif status == 'COLD':
-        maestro_nodes[name].unlock()
+    try:
+        if status == 'HEAT':
+            maestro_nodes[name].lock()
+        elif status == 'COLD':
+            maestro_nodes[name].unlock()
 
-
-    print(f'Node: {name[:4]}, Tipo: {type}, Status: {status}')
+        print(f'Node: {name[:4]}, Tipo: {type}, Status: {status}')
+    except:
+        pass
+    
 
 rabbit_register = RabbitReceiver('register', __register_node)
 rabbit_unregister = RabbitReceiver('unregister', __unregister_node)
