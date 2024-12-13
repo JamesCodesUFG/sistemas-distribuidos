@@ -1,1 +1,0 @@
-Armazenar aqui imagens.
