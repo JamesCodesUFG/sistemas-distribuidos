@@ -1,15 +1,19 @@
-echo "Clonando o repositório..."
-
-get clone https://github.com/JamesCodesUFG/sistemas-distribuidos.git
-
-cd sistemas-distribuidos
-
 echo "Instalando dependências..."
 
-pip install -r requirements.txt
+pip install pika
+pip install rpyc
+pip install putil
 
-cd tarefa
+echo "Clonando o repositório..."
 
-exho "Executando o script node.py..."
+git clone https://github.com/JamesCodesUFG/sistemas-distribuidos.git
+
+cd sistemas-distribuidos/tarefas
+
+cp -R ./utils ./remote/node
+
+cd ./remote/node
+
+echo "Executando o script node.py..."
 
 python3 node.py
