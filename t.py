@@ -1,9 +1,14 @@
+import base64
 import json
 
-a = {"hello": 1, 'World': 2}
+message = {
+                    'name': f'a_a',
+                    'file': b''
+                }
 
-aux = json.dumps(a)
+json_string = json.dumps(message)
 
-b = json.loads(aux)
+decoded_data = json.loads(json_string)
 
-print(b.hello)
+print(decoded_data['name'])
+

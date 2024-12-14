@@ -3,7 +3,7 @@ import time
 import psutil
 import threading
 
-from utils.rabbit import rabbit_send
+from utils.rabbit import rabbit_single_send
 
 OFF_SET = 0.3
 
@@ -26,10 +26,10 @@ class CPUMonitor(threading.Thread):
 
             if not self.__state and cpu_percent >= self.__limit:
                 self.__state = True
-                rabbit_send('monitor', f'{self.__name} CPU HEAT')
+                rabbit_single_send('monitor', { 'node': self.__name, 'comp': 'CPU', 'status': 'HEAT' })
             elif self.__state and cpu_percent < self.__limit - OFF_SET:
                 self.__state = False
-                rabbit_send('monitor', f'{self.__name} CPU COLD')
+                rabbit_single_send('monitor', { 'node': self.__name, 'comp': 'CPU', 'status': 'COLD' })
         
             print(f"Uso da CPU pelo processo Python: {cpu_percent:.2f}%")
 
@@ -54,10 +54,10 @@ class RAMMonitor(threading.Thread):
 
             if not self.__state and ram_percent >= self.__limit:
                 self.__state = True
-                rabbit_send('monitor', f'{self.__name} RAM HEAT')
+                rabbit_single_send('monitor', { 'node': self.__name, 'comp': 'RAM', 'status': 'HEAT' })
             elif self.__state and ram_percent < self.__limit - OFF_SET:
                 self.__state = False
-                rabbit_send('monitor', f'{self.__name} RAM COLD')
+                rabbit_single_send('monitor', { 'node': self.__name, 'comp': 'RAM', 'status': 'COLD' })
         
             print(f"Porcentagem de RAM usada: {ram_percent}%")
 
@@ -85,14 +85,12 @@ class HDDMonitor(threading.Thread):
 
             disk_usage_percent = disk_usage.percent
 
-            if not self.__state and disk_usage_percent >= self.__limit:
+            if self.__state and disk_usage_percent >= self.__limit:
                 self.__state = True
-                rabbit_send('monitor', f'{self.__name} HDD HEAT')
-            elif self.__state and disk_usage_percent < self.__limit - OFF_SET:
+                rabbit_single_send('monitor', { 'node': self.__name, 'comp': 'HDD', 'status': 'HEAT' })
+            elif not self.__state and disk_usage_percent < self.__limit - OFF_SET:
                 self.__state = False
-                rabbit_send('monitor', f'{self.__name} HDD COLD')
-        
-            print(f"Espaço no HD: {espaco_usado:.2f} GB de {espaco_total:.2f} GB usados ({disk_usage_percent}% de uso)")
+                rabbit_single_send('monitor', { 'node': self.__name, 'comp': 'HDD', 'status': 'COLD' })
 
             time.sleep(2)
 

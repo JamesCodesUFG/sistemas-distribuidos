@@ -2,7 +2,7 @@ import rpyc
 
 from typing import Any
 
-from utils.rabbit import RabbitReceiver
+from utils.rabbit import *
 
 REPLICATION_FACTOR = 2
 
@@ -10,45 +10,46 @@ current_index: int = 0
 
 maestro_nodes: dict[str, 'Node'] = {}
 
-def __register_node(name: bytes):
+def aux(a):
+    print('Hello')
+
+
+def __register_node(data: dict):
+    global maestro_nodes
+
+    if not data['name'] in maestro_nodes:
+        maestro_nodes[data['name']] = Node(data['name'])
+    else:
+        print('Nó já foi regsitrado...')
+
+
+def __unregister_node(data: bytes):
     global maestro_nodes
 
     try:
-        maestro_nodes[name.decode()] = Node(name.decode())
+        del maestro_nodes[data['name']]
 
-        print(f'\nNó {name.decode()} registrado...\n')
-    except:
-        print('Tentativa falha de registro de nó...')
-
-def __unregister_node(name: bytes):
-    global maestro_nodes
-
-    try:
-        del maestro_nodes[name.decode()]
-
-        print(f'\nNó {name.decode()} cancelou registro...\n')
+        print(f'\nNó {data['name']} cancelou registro...\n')
     except:
         print('Tentativa falha de cancelar registro...')
 
-def __monitor_node(body: bytes):
+def __monitor_node(data: dict):
     global maestro_nodes
 
-    name, type, status = body.decode().split(' ')
-
     try:
-        if status == 'HEAT':
-            maestro_nodes[name].lock()
-        elif status == 'COLD':
-            maestro_nodes[name].unlock()
+        if data['status'] == 'HEAT':
+            maestro_nodes[data['node']].lock()
+        elif data['status'] == 'COLD':
+            maestro_nodes[data['node']].unlock()
 
-        print(f'Node: {name[:4]}, Tipo: {type}, Status: {status}')
+        print(f'Node: {data['node']}, Tipo: {data['comp']}, Status: {data['status']}')
     except:
         pass
     
 
-rabbit_register = RabbitReceiver('register', __register_node)
-rabbit_unregister = RabbitReceiver('unregister', __unregister_node)
-rabbit_monitor = RabbitReceiver('monitor', __monitor_node)
+rabbit_register = RabbitSingleReceiver('localhost', 'register', __register_node)
+rabbit_unregister = RabbitSingleReceiver('localhost', 'unregister', __unregister_node)
+rabbit_monitor = RabbitSingleReceiver('localhost', 'monitor', __monitor_node)
 
 rabbit_register.start()
 rabbit_unregister.start()
@@ -99,35 +100,13 @@ class MaestroService(rpyc.Service):
     def exposed_next(self) -> list[tuple[str, Any]]:
         global maestro_nodes
 
-        results: list[Node] = []
-
-        if len(maestro_nodes) <= REPLICATION_FACTOR:
-            return [(node.name, node.addr()) for node in maestro_nodes.values()]
-
-        while len(results) < REPLICATION_FACTOR:
-            new_node = self.__round_robin()
-
-            if new_node not in results:
-                results.append(new_node)
-
-        services = [(node.name, node.addr()) for node in results]
-
-        return services
+        return self.__round_robin().name
     
 
-    def exposed_choose(self, names: list[str]):
+    def exposed_get(self, name: str):
         global maestro_nodes
 
-        choices = [maestro_nodes[name].copy() for name in names]
-
-        result = self.__round_robin_alt(choices)
-
-        return result.addr()
-    
-    def exposed_all(self, names: list[str]):
-        global maestro_nodes
-
-        return [maestro_nodes[name].addr() for name in names]
+        return maestro_nodes[name].addr()
     
     
     def __round_robin(self) -> Node:

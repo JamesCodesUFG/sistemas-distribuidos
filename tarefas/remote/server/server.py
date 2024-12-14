@@ -1,15 +1,17 @@
 import rpyc
 import math
 
+from utils.rabbit import rabbit_multiple_send
+
 class GeoEye(rpyc.Service):
     def __init__(self):
-        self.__storage: dict[str, dict[str, list[str]]] = {}
+        self.__storage: dict[str, dict[str, str]] = {}
     
     def exposed_get(self, name: str) -> bytes:
         result = b''
 
         for key in self.__storage[name]:
-            port, host = self.__connect_maestro().choose(self.__storage[name][key])
+            port, host = self.__connect_maestro().get(self.__storage[name][key])
 
             service = self.__connect_node(port, host)
 
@@ -18,32 +20,25 @@ class GeoEye(rpyc.Service):
         return result
     
 
-    def exposed_post(self, name: str, file: bytes) -> None:
-        BUFFER_SIZE = 540672
+    def exposed_post(self, file_name: str, part: int, file: bytes) -> None:
+        if not file_name in self.__storage:
+            self.__storage[file_name] = {}
 
-        self.__storage[name] = {}
+        node_name = self.__connect_maestro().next()
 
-        for inner in range(0, math.ceil(len(file) / BUFFER_SIZE)):
-            self.__storage[name][inner] = []
+        self.__storage[file_name][part] = node_name
 
-            _tuples = self.__connect_maestro().next()
+        message = {
+            'name': f'{file_name}_{part}',
+            'file': file
+        }
 
-            for node_name, addr in _tuples:
-                self.__storage[name][inner].append(node_name)
-
-                service = self.__connect_node(addr[0], addr[1])
-
-                service.post(f'{name}_{inner}', file[inner * BUFFER_SIZE: (inner + 1) * BUFFER_SIZE])
+        rabbit_multiple_send(f'post_{node_name}', message)
 
 
     def exposed_delete(self, name: str) -> None:
         for key in self.__storage[name]:
-            _addrs = self.__connect_maestro().all(self.__storage[name][key])
-
-            for host, port in _addrs:
-                service = self.__connect_node(host, port)
-
-                service.delete(f'{name}_{key}')
+            rabbit_multiple_send(f'delete_{self.__storage[name][key]}', { 'name': f'{name}_{key}'})
 
         del self.__storage[name]
 

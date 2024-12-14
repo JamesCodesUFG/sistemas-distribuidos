@@ -1,40 +1,37 @@
 import sys
 import rpyc
 import uuid
-import json
 
 from rpyc.utils.server import ThreadedServer
 
 from utils.rabbit import *
 from utils.file_manager import FileManager
 
-NODE_NAME = sys.argv[1]
+NODE_NAME = f'NODE_{sys.argv[1]}'
 
-fmanager: FileManager = FileManager(f'images_{NODE_NAME}')
+fmanager: FileManager = FileManager(f'{NODE_NAME}_{uuid.uuid4()}')
 
-def post(body: bytes):
+def post(data: dict):
     global fmanager
-
-    data = json.loads(body)
 
     fmanager.write(data['name'], data['file'])
 
 
-def delete(body: bytes):
+def delete(data: dict):
     global fmanager
-
-    data = json.loads(body)
 
     fmanager.delete(data['name'])
 
-rabbit_post = RabbitMultipleReceiver(sys.argv[2], f'post_{NODE_NAME}', post)
-rabbit_delete = RabbitMultipleReceiver(sys.argv[2], f'delete_{NODE_NAME}', delete)
+rabbit_post = RabbitMultipleReceiver(sys.argv[2], f'post_{NODE_NAME}', post).start()
+rabbit_delete = RabbitMultipleReceiver(sys.argv[2], f'delete_{NODE_NAME}', delete).start()
 
 class NodeService(rpyc.Service):
-    ALIASES = [f'NODE_{NODE_NAME}']
+    ALIASES = [NODE_NAME]
 
     def exposed_get(self, name: str) -> bytes:
-        file = self.__fmanager.read(name)
+        global fmanager
+
+        file = fmanager.read(name)
 
         return file
 
@@ -42,7 +39,7 @@ class NodeService(rpyc.Service):
 if __name__ == "__main__":
     import monitor
 
-    __hdd_monitor = monitor.HDDMonitor(0.9, f'NODE_{NODE_NAME}')
+    __hdd_monitor = monitor.HDDMonitor(0.95, NODE_NAME)
 
     try:
         __hdd_monitor.start()
@@ -54,7 +51,7 @@ if __name__ == "__main__":
             'max_message_size': 10*9,
         })
 
-        rabbit_send('register', f'NODE_{str(NODE_NAME)}')
+        rabbit_single_send('register', { 'name': NODE_NAME })
 
         print(f'\nNó iniciado em {(server.host, server.port)}\n')
 
@@ -62,6 +59,6 @@ if __name__ == "__main__":
     except:
         __hdd_monitor.stop()
     finally:
-        rabbit_send('unregister', f'NODE_{str(NODE_NAME)}')
+        rabbit_single_send('unregister', { 'name': NODE_NAME })
 
         
