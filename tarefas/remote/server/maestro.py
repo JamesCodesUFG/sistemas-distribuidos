@@ -39,6 +39,8 @@ def __monitor_node(data: dict):
     global maestro_nodes
 
     name = data['name']
+    comp = data['comp']
+    status = data['status']
 
     try:
         if data['status'] == 'HEAT':
@@ -46,7 +48,7 @@ def __monitor_node(data: dict):
         elif data['status'] == 'COLD':
             maestro_nodes[data['node']].unlock()
 
-        print(f'Node: {name}, Tipo: {data['comp']}, Status: {data['status']}')
+        print(f'Node: {name}, Tipo: {comp}, Status: {status}')
     except:
         print('Tentativa falha de monitoramento...')
     
