@@ -1,7 +1,7 @@
-import pika, threading
+import pika
+import threading
 import base64
 import json
-
 import sys
 
 def decode_msg(data: bytes):
@@ -10,10 +10,10 @@ def decode_msg(data: bytes):
     return {key: (base64.b64decode(value) if key == "file" else value) for key, value in _json.items()}
 
 class RabbitSingleReceiver(threading.Thread):
-    def __init__(self, host: str, queue: str, callback):
+    def __init__(self, queue: str, callback):
         super().__init__(daemon=True)
 
-        self.__conn = pika.BlockingConnection(pika.ConnectionParameters(host=sys.argv[2]))
+        self.__conn = pika.BlockingConnection(pika.ConnectionParameters(host=sys.argv[1]))
 
         self.__queue = queue
         self.__callback = callback
@@ -32,10 +32,10 @@ class RabbitSingleReceiver(threading.Thread):
         channel.start_consuming()
 
 class RabbitMultipleReceiver(threading.Thread):
-    def __init__(self, host: str, exchange: str, callback):
+    def __init__(self, exchange: str, callback):
         super().__init__(daemon=True)
 
-        self.__conn = pika.BlockingConnection(pika.ConnectionParameters(host=sys.argv[2]))
+        self.__conn = pika.BlockingConnection(pika.ConnectionParameters(host=sys.argv[1]))
 
         self.__exchange = exchange
         self.__callback = callback
@@ -62,8 +62,8 @@ def encode_msg(data: dict):
 
     return json.dumps(_base64)
 
-def rabbit_single_send(queue: str, message: dict, host: str = 'localhost'):
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=sys.argv[2]))
+def rabbit_single_send(queue: str, message: dict):
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=sys.argv[1]))
 
     channel = connection.channel()
 
@@ -73,8 +73,8 @@ def rabbit_single_send(queue: str, message: dict, host: str = 'localhost'):
 
     connection.close()
 
-def rabbit_multiple_send(exchange: str, message: dict, host: str = 'localhost'):
-    conn = pika.BlockingConnection(pika.ConnectionParameters(host=sys.argv[2]))
+def rabbit_multiple_send(exchange: str, message: dict):
+    conn = pika.BlockingConnection(pika.ConnectionParameters(host=sys.argv[1]))
 
     channel = conn.channel()
 

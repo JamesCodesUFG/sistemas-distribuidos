@@ -47,9 +47,9 @@ def __monitor_node(data: dict):
         pass
     
 
-rabbit_register = RabbitSingleReceiver('localhost', 'register', __register_node)
-rabbit_unregister = RabbitSingleReceiver('localhost', 'unregister', __unregister_node)
-rabbit_monitor = RabbitSingleReceiver('localhost', 'monitor', __monitor_node)
+rabbit_register = RabbitSingleReceiver('register', __register_node)
+rabbit_unregister = RabbitSingleReceiver('unregister', __unregister_node)
+rabbit_monitor = RabbitSingleReceiver('monitor', __monitor_node)
 
 rabbit_register.start()
 rabbit_unregister.start()

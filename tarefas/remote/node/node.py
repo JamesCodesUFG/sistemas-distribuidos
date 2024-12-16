@@ -22,8 +22,8 @@ def delete(data: dict):
 
     fmanager.delete(data['name'])
 
-rabbit_post = RabbitMultipleReceiver(sys.argv[2], f'post_{NODE_NAME}', post).start()
-rabbit_delete = RabbitMultipleReceiver(sys.argv[2], f'delete_{NODE_NAME}', delete).start()
+rabbit_post = RabbitMultipleReceiver(f'post_{NODE_NAME}', post).start()
+rabbit_delete = RabbitMultipleReceiver(f'delete_{NODE_NAME}', delete).start()
 
 class NodeService(rpyc.Service):
     ALIASES = [NODE_NAME]
