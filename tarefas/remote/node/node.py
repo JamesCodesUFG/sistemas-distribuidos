@@ -43,7 +43,7 @@ class NodeService(rpyc.Service):
         for file_name in files_names:
             file = fmanager.read(file_name)
 
-            rabbit_multiple_send(NODE_NAME, {
+            rabbit_multiple_send(f'post_{NODE_NAME}', {
                 'name': file_name,
                 'file': file
             })

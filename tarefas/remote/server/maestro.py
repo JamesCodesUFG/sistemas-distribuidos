@@ -10,9 +10,6 @@ current_index: int = 0
 
 maestro_nodes: dict[str, 'Node'] = {}
 
-def aux(a):
-    print('Hello')
-
 
 def __register_node(data: dict):
     global maestro_nodes
