@@ -2,6 +2,10 @@ import pika, threading
 import base64
 import json
 
+import sys
+
+print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa', sys.argv[2])
+
 def decode_msg(data: bytes):
     _json = json.loads(data)
 
@@ -33,7 +37,7 @@ class RabbitMultipleReceiver(threading.Thread):
     def __init__(self, host: str, exchange: str, callback):
         super().__init__(daemon=True)
 
-        self.__conn = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        self.__conn = pika.BlockingConnection(pika.ConnectionParameters(host=host))
 
         self.__exchange = exchange
         self.__callback = callback
