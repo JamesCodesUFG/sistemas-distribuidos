@@ -35,7 +35,7 @@ class Client:
         self.__file_manager.write(name, file)
 
     def post(self, name: str) -> None:
-        BUFFER_SIZE = 60000
+        BUFFER_SIZE = 512000
         
         file = self.__file_manager.read(name)
 

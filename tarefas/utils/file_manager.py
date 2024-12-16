@@ -18,6 +18,9 @@ class FileManager:
         return data
 
     def write(self, name: str, data: bytes) -> None:
+        if os.path.exists(name):
+            return
+
         with open(f'{self.path}/{name}', 'wb') as file:
             file.write(data)
 
@@ -26,6 +29,13 @@ class FileManager:
             os.remove(f'{self.path}/{file_name}')
         except Exception as exception:
             raise exception
+        
+    def list(self) -> list[str]:
+        itens = os.listdir(self.path)
+        
+        arquivos = [item for item in itens if os.path.isfile(os.path.join(self.path, item))]
+
+        return arquivos
     
     def exit(self):
         shutil.rmtree(self.path)

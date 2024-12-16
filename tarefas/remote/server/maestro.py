@@ -22,20 +22,17 @@ def __register_node(data: dict):
 
         print('Nó regsitrado com sucesso...')
     else:
+        host, port = maestro_nodes[data['name']].addr()
+
+        service = rpyc.connect(host, port, config={
+                    'allow_pickle': True,
+                    'sync_request_timeout': None
+                }).root
+
+        service.sync()
+        
         print('Nó já foi regsitrado...')
 
-
-def __unregister_node(data: bytes):
-    global maestro_nodes
-
-    try:
-        del maestro_nodes[data['name']]
-
-        name = data['name']
-
-        print(f'\nNó {name} cancelou registro...\n')
-    except:
-        print('Tentativa falha de cancelar registro...')
 
 def __monitor_node(data: dict):
     global maestro_nodes
@@ -56,11 +53,9 @@ def __monitor_node(data: dict):
     
 
 rabbit_register = RabbitSingleReceiver('register', __register_node)
-rabbit_unregister = RabbitSingleReceiver('unregister', __unregister_node)
 rabbit_monitor = RabbitSingleReceiver('monitor', __monitor_node)
 
 rabbit_register.start()
-rabbit_unregister.start()
 rabbit_monitor.start()
 
 class Node:

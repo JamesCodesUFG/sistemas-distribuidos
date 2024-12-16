@@ -34,6 +34,19 @@ class NodeService(rpyc.Service):
         file = fmanager.read(name)
 
         return file
+    
+    def exposed_sync(self) -> None:
+        global fmanager
+
+        files_names = fmanager.list()
+
+        for file_name in files_names:
+            file = fmanager.read(file_name)
+
+            rabbit_multiple_send(NODE_NAME, {
+                'name': file_name,
+                'file': file
+            })
 
 
 if __name__ == "__main__":
