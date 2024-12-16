@@ -45,7 +45,7 @@ class GeoEye(rpyc.Service):
     def exposed_list(self) -> list[str]:
         return list(self.__storage.keys())
     
-    def expose_chunck_lenght(self, file_name: str) -> int:
+    def exposed_chunck_lenght(self, file_name: str) -> int:
         return len(self.__storage[file_name])
     
     def __connect_node(self, host: str, port: str):
