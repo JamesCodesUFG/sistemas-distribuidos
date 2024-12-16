@@ -26,6 +26,6 @@ class InputManager():
                 self.__commands[input_cmd].execute(input_arg)
             else:
                 print('\nComando não reconhecido...\n')
-        except:
-            pass
+        except Exception as e:
+            print(str(e))
 

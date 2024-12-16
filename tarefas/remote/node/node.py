@@ -7,7 +7,7 @@ from rpyc.utils.server import ThreadedServer
 from utils.rabbit import *
 from utils.file_manager import FileManager
 
-NODE_NAME = f'NODE_{sys.argv[1]}'
+NODE_NAME = f'NODE_{sys.argv[2]}'
 
 fmanager: FileManager = FileManager(f'{NODE_NAME}_{uuid.uuid4()}')
 

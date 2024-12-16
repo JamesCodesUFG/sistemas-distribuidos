@@ -19,6 +19,8 @@ def __register_node(data: dict):
 
     if not data['name'] in maestro_nodes:
         maestro_nodes[data['name']] = Node(data['name'])
+
+        print('Nó regsitrado com sucesso...')
     else:
         print('Nó já foi regsitrado...')
 
