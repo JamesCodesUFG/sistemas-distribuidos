@@ -4,8 +4,6 @@ import json
 
 import sys
 
-print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa', sys.argv[2])
-
 def decode_msg(data: bytes):
     _json = json.loads(data)
 
@@ -15,7 +13,7 @@ class RabbitSingleReceiver(threading.Thread):
     def __init__(self, host: str, queue: str, callback):
         super().__init__(daemon=True)
 
-        self.__conn = pika.BlockingConnection(pika.ConnectionParameters(host=host))
+        self.__conn = pika.BlockingConnection(pika.ConnectionParameters(host=sys.argv[2]))
 
         self.__queue = queue
         self.__callback = callback
@@ -37,7 +35,7 @@ class RabbitMultipleReceiver(threading.Thread):
     def __init__(self, host: str, exchange: str, callback):
         super().__init__(daemon=True)
 
-        self.__conn = pika.BlockingConnection(pika.ConnectionParameters(host=host))
+        self.__conn = pika.BlockingConnection(pika.ConnectionParameters(host=sys.argv[2]))
 
         self.__exchange = exchange
         self.__callback = callback
@@ -65,7 +63,7 @@ def encode_msg(data: dict):
     return json.dumps(_base64)
 
 def rabbit_single_send(queue: str, message: dict, host: str = 'localhost'):
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=host))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=sys.argv[2]))
 
     channel = connection.channel()
 
@@ -76,7 +74,7 @@ def rabbit_single_send(queue: str, message: dict, host: str = 'localhost'):
     connection.close()
 
 def rabbit_multiple_send(exchange: str, message: dict, host: str = 'localhost'):
-    conn = pika.BlockingConnection(pika.ConnectionParameters(host=host))
+    conn = pika.BlockingConnection(pika.ConnectionParameters(host=sys.argv[2]))
 
     channel = conn.channel()
 
