@@ -29,12 +29,16 @@ def __unregister_node(data: bytes):
     try:
         del maestro_nodes[data['name']]
 
-        print(f'\nNó {data['name']} cancelou registro...\n')
+        name = data['name']
+
+        print(f'\nNó {name} cancelou registro...\n')
     except:
         print('Tentativa falha de cancelar registro...')
 
 def __monitor_node(data: dict):
     global maestro_nodes
+
+    name = data['name']
 
     try:
         if data['status'] == 'HEAT':
@@ -42,9 +46,9 @@ def __monitor_node(data: dict):
         elif data['status'] == 'COLD':
             maestro_nodes[data['node']].unlock()
 
-        print(f'Node: {data['node']}, Tipo: {data['comp']}, Status: {data['status']}')
+        print(f'Node: {name}, Tipo: {data['comp']}, Status: {data['status']}')
     except:
-        pass
+        print('Tentativa falha de monitoramento...')
     
 
 rabbit_register = RabbitSingleReceiver('register', __register_node)
