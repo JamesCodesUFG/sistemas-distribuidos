@@ -11,9 +11,9 @@ git clone https://github.com/JamesCodesUFG/sistemas-distribuidos.git
 
 cd sistemas-distribuidos/tarefas
 
-cp -R ./utils ./remote/maestro
+cp -R ./utils ./remote/server
 
-cd ./remote/maestro
+cd ./remote/server
 
 echo "Executando o script maestro.py..."
 
