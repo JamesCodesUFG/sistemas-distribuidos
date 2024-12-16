@@ -4,7 +4,7 @@ import shutil
 
 class FileManager:
     def __init__(self, path: str):
-        self.path = self.__file_dir() + f'\\{path}'
+        self.path = self.__file_dir() + f'/{path}'
 
         if not os.path.isdir(self.path):
             os.makedirs(self.path)
@@ -12,7 +12,7 @@ class FileManager:
     def read(self, name: str) -> bytes:
         data: bytes = None
 
-        with open(f'{self.path}\\{name}', 'rb') as file:
+        with open(f'{self.path}/{name}', 'rb') as file:
             data = file.read()
 
         return data
@@ -23,7 +23,7 @@ class FileManager:
 
     def delete(self, file_name: str):
         try:
-            os.remove(f'{self.path}\\{file_name}')
+            os.remove(f'{self.path}/{file_name}')
         except Exception as exception:
             raise exception
     
