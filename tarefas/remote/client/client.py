@@ -5,6 +5,7 @@ from utils.file_manager import FileManager
 from utils.input_manager import InputManager, Commmand
 
 import time
+import sys
 
 class Client:
     __file_manager: FileManager = FileManager('images')
@@ -64,4 +65,4 @@ class Client:
         finally:
             return self.__geoeye.root
     
-Client()
+Client(sys.argv[1])
