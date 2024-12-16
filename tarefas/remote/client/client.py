@@ -1,4 +1,5 @@
 import rpyc
+import math
 
 from utils.file_manager import FileManager
 from utils.input_manager import InputManager, Commmand
@@ -33,20 +34,12 @@ class Client:
         self.__file_manager.write(name, file)
 
     def post(self, name: str) -> None:
-        i = time.time()
+        BUFFER_SIZE = 60000
         
         file = self.__file_manager.read(name)
 
-        self.__connect().post(name, file)
-
-        e = time.time()
-
-        print('duração', e - i)
-
-    def a(self, name: str, f: bytes):
-        file = self.__connect().get(name)
-
-        self.__file_manager.write(name, file)
+        for inner in range(0, math.ceil(len(file) / BUFFER_SIZE)):
+            self.__connect().post(name, inner, file[inner * BUFFER_SIZE: (inner + 1) * BUFFER_SIZE])
 
     def list(self) -> None:
         names = self.__connect().list()

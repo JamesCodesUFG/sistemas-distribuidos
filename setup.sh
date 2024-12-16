@@ -16,4 +16,4 @@ cd ./remote/node
 
 echo "Executando o script node.py..."
 
-python3 node.py
+python3 node.py $1 $2
