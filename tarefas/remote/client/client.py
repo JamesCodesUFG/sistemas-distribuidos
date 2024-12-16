@@ -30,7 +30,12 @@ class Client:
             self.__input.next()
 
     def get(self, name: str) -> None:
-        file = self.__connect().get(name)
+        file = b''
+
+        n_shards = self.__connect().chunck_lenght(name)
+
+        for i in range(0, n_shards):
+            file += self.__connect().get(name, i)
 
         self.__file_manager.write(name, file)
 

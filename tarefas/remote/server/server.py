@@ -7,15 +7,14 @@ class GeoEye(rpyc.Service):
     def __init__(self):
         self.__storage: dict[str, dict[str, str]] = {}
     
-    def exposed_get(self, name: str) -> bytes:
+    def exposed_get(self, name: str, shard: int) -> bytes:
         result = b''
 
-        for key in self.__storage[name]:
-            port, host = self.__connect_maestro().get(self.__storage[name][key])
+        port, host = self.__connect_maestro().get(self.__storage[name][shard])
 
-            service = self.__connect_node(port, host)
+        service = self.__connect_node(port, host)
 
-            result += service.get(f'{name}_{key}')
+        result += service.get(f'{name}_{shard}')
 
         return result
     
@@ -46,6 +45,8 @@ class GeoEye(rpyc.Service):
     def exposed_list(self) -> list[str]:
         return list(self.__storage.keys())
     
+    def expose_chunck_lenght(self, file_name: str) -> int:
+        return len(self.__storage[file_name])
     
     def __connect_node(self, host: str, port: str):
         return rpyc.connect(
